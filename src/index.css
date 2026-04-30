@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 14% 4%;
+    --foreground: 45 15% 90%;
+    --card: 220 12% 6%;
+    --card-foreground: 45 15% 90%;
+    --popover: 220 12% 6%;
+    --popover-foreground: 45 15% 90%;
+    --primary: 43 95% 58%;
+    --primary-foreground: 220 14% 4%;
+    --secondary: 220 10% 10%;
+    --secondary-foreground: 45 10% 65%;
+    --muted: 220 10% 8%;
+    --muted-foreground: 220 8% 42%;
+    --accent: 43 80% 45%;
+    --accent-foreground: 220 14% 4%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 12% 13%;
+    --input: 220 10% 10%;
+    --ring: 43 95% 58%;
+    --radius: 0.25rem;
+
+    --gold: 43 95% 58%;
+    --amber: 38 92% 50%;
+    --cream: 45 15% 90%;
+    --dim: 220 8% 28%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'Space Mono', monospace;
+  }
+}
+
+/* Film grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); }
+
+/* ASCII output */
+.ascii-output {
+  font-family: 'Space Mono', monospace;
+  line-height: 1.0;
+  letter-spacing: 0;
+  white-space: pre;
+}
+
+/* Upload zone hatching */
+.upload-zone {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    hsl(var(--border) / 0.4) 6px,
+    hsl(var(--border) / 0.4) 7px
+  );
+}
+
+/* Glow */
+.glow-gold {
+  box-shadow: 0 0 30px hsl(var(--primary) / 0.12), 0 0 60px hsl(var(--primary) / 0.04);
+}
+
+/* Gold line accent */
+.gold-line::before {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 100%;
+  background: hsl(var(--primary));
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Range slider */
+input[type='range'] {
+  -webkit-appearance: none;
+  background: transparent;
+  width: 100%;
+}
+input[type='range']::-webkit-slider-track {
+  background: hsl(var(--border));
+  height: 1px;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  margin-top: -5.5px;
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.6), 0 0 20px hsl(var(--primary) / 0.2);
+  transition: box-shadow 0.2s;
+}
+input[type='range']:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 14px hsl(var(--primary) / 0.9), 0 0 28px hsl(var(--primary) / 0.3);
+}
+
+/* Animated border for canvas area */
+@keyframes border-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.border-animate {
+  animation: border-pulse 3s ease-in-out infinite;
+}
+
+/* Corner brackets */
+.bracket-tl::before { content: ''; position: absolute; top: -1px; left: -1px; width: 16px; height: 16px; border-top: 1px solid hsl(var(--primary)); border-left: 1px solid hsl(var(--primary)); }
+.bracket-tr::after  { content: ''; position: absolute; top: -1px; right: -1px; width: 16px; height: 16px; border-top: 1px solid hsl(var(--primary)); border-right: 1px solid hsl(var(--primary)); }
+.bracket-bl::before { content: ''; position: absolute; bottom: -1px; left: -1px; width: 16px; height: 16px; border-bottom: 1px solid hsl(var(--primary)); border-left: 1px solid hsl(var(--primary)); }
