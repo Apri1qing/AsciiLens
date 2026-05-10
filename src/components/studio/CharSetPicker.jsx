@@ -17,9 +17,9 @@ export default function CharSetPicker({ charSet, customChars, onCharSetChange, o
             <button
               key={p.id}
               onClick={() => onCharSetChange(p.id)}
-              className={`py-2 px-1 text-center transition-all duration-150
+              className={`rounded-[4px] px-1 py-2 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
                 ${active
-                  ? 'bg-primary/10 ring-1 ring-primary text-primary'
+                  ? 'bg-primary text-primary-foreground ring-1 ring-primary'
                   : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
                 }`}
             >
@@ -37,7 +37,7 @@ export default function CharSetPicker({ charSet, customChars, onCharSetChange, o
             value={customChars}
             onChange={(e) => onCustomCharsChange(e.target.value)}
             placeholder="e.g. HELLO WORLD @#$..."
-            className="w-full bg-secondary border border-border rounded-none px-3 py-2 text-[10px] font-mono text-foreground placeholder:text-muted-foreground/40 resize-none h-14 focus:outline-none focus:border-primary/50 transition-colors"
+            className="h-14 w-full resize-none rounded-[6px] border border-border bg-background px-3 py-2 font-mono text-[10px] text-foreground placeholder:text-muted-foreground/55 transition-colors focus:border-primary/70 focus:outline-none focus:ring-1 focus:ring-primary/30"
             spellCheck={false}
           />
         </div>

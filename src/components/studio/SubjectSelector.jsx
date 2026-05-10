@@ -155,31 +155,31 @@ export default function SubjectSelector({ imageUrl, selectionRect, onSelectionCh
           {/* Committed selection border */}
           {sel && sel.type === 'rect' && (
             <rect x={sel.x} y={sel.y} width={sel.w} height={sel.h}
-              fill="rgba(255,200,50,0.05)" stroke="hsl(43,95%,58%)" strokeWidth="0.005" />
+              fill="hsl(var(--primary) / 0.06)" stroke="hsl(var(--primary))" strokeWidth="0.005" />
           )}
           {sel && sel.type === 'circle' && (
             <circle cx={sel.cx} cy={sel.cy} r={sel.r}
-              fill="rgba(255,200,50,0.05)" stroke="hsl(43,95%,58%)" strokeWidth="0.005" />
+              fill="hsl(var(--primary) / 0.06)" stroke="hsl(var(--primary))" strokeWidth="0.005" />
           )}
           {sel && sel.type === 'freehand' && (
             <path d={freehandPathD(sel.points)}
-              fill="rgba(255,200,50,0.05)" stroke="hsl(43,95%,58%)" strokeWidth="0.005" />
+              fill="hsl(var(--primary) / 0.06)" stroke="hsl(var(--primary))" strokeWidth="0.005" />
           )}
 
           {/* Live drag feedback */}
           {dragRect && (
             <rect x={dragRect.x} y={dragRect.y} width={dragRect.w} height={dragRect.h}
-              fill="rgba(255,200,50,0.08)" stroke="hsl(43,95%,58%)"
+              fill="hsl(var(--primary) / 0.1)" stroke="hsl(var(--primary))"
               strokeWidth="0.008" strokeDasharray="0.025 0.015" />
           )}
           {dragCircle && (
             <circle cx={dragCircle.cx} cy={dragCircle.cy} r={dragCircle.r}
-              fill="rgba(255,200,50,0.08)" stroke="hsl(43,95%,58%)"
+              fill="hsl(var(--primary) / 0.1)" stroke="hsl(var(--primary))"
               strokeWidth="0.008" strokeDasharray="0.025 0.015" />
           )}
           {dragFree && (
             <polyline points={dragFree}
-              fill="none" stroke="hsl(43,95%,58%)"
+              fill="none" stroke="hsl(var(--primary))"
               strokeWidth="0.008" strokeDasharray="0.025 0.015" />
           )}
         </svg>

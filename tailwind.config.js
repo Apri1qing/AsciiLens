@@ -54,9 +54,11 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-        gold: 'hsl(var(--gold))',
-        amber: 'hsl(var(--amber))',
-        cream: 'hsl(var(--cream))',
+        pink: 'hsl(var(--spectrum-pink))',
+        cream: 'hsl(var(--spectrum-cream))',
+        blue: 'hsl(var(--spectrum-blue))',
+        whiteish: 'hsl(var(--spectrum-white))',
+        green: 'hsl(var(--spectrum-green))',
   		},
   		keyframes: {
   			'accordion-down': {

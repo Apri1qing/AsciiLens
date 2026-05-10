@@ -1,6 +1,6 @@
-# ACID LENS
+# ASCII LENS
 
-ACID LENS is a Vite + React app for turning images into stylized ASCII artwork.
+ASCII LENS is a Vite + React app for turning images into stylized ASCII artwork.
 
 ## Development
 

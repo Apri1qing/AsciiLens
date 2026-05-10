@@ -1,36 +1,45 @@
 import React from 'react';
-import { Download, RefreshCw, Loader2, Eraser, Square, Circle, PenLine, X } from 'lucide-react';
+import { Download, RefreshCw, Loader2, Eraser, Square, Circle, PenLine } from 'lucide-react';
 import ControlSlider from './ControlSlider';
 import CharSetPicker from './CharSetPicker';
 import ColorPicker from './ColorPicker';
 import { useLang } from '@/lib/LanguageContext';
 
-export default function EditorPanel({ settings, onChange, onReset, onResetEffects, canvasRef, isProcessing, hasResult, shapeMode, onShapeModeChange, onClearSelection, hasSelection }) {
+export default function EditorPanel({
+  settings,
+  renderMode,
+  onChange,
+  onReset,
+  onResetEffects,
+  canvasRef,
+  isProcessing,
+  hasResult,
+  shapeMode,
+  onShapeModeChange,
+}) {
   const { t } = useLang();
   const handleDownload = () => canvasRef.current?.download();
+  const mode = renderMode || settings.mode;
 
   return (
     <div className="h-full flex flex-col min-h-0">
       {/* Panel Header */}
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-border/80 bg-card/85 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[9px] tracking-[0.3em] text-muted-foreground uppercase">{t('controls')}</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-muted-foreground">{t('controls')}</span>
           <span className="text-primary/30 font-mono text-[9px]">//</span>
-          <span className="font-mono text-[9px] tracking-widest text-primary/60 uppercase">ASCII Studio</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-primary">ASCII LENS</span>
         </div>
-        <div className={`flex items-center gap-1.5 text-[9px] font-mono tracking-widest uppercase transition-opacity duration-300 ${isProcessing ? 'opacity-100' : 'opacity-0'}`}>
-          <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
-          <span className="text-primary">{t('rendering')}</span>
-        </div>
+        {isProcessing && (
+          <div className="flex items-center gap-1.5 text-[9px] font-mono tracking-widest uppercase">
+            <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
+            <span className="text-primary">{t('rendering')}</span>
+          </div>
+        )}
       </div>
 
       {/* Scrollable controls */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 min-h-0">
-
-        {/* ── Color (first) ── */}
-        <Section label={t('color')}>
-          <ColorPicker value={settings.colorMode} onChange={(v) => onChange('colorMode', v)} />
-        </Section>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
 
         {/* ── Render Mode ── */}
         <Section label={t('modeLabel')}>
@@ -39,32 +48,65 @@ export default function EditorPanel({ settings, onChange, onReset, onResetEffect
               { id: 'overlay', label: t('modeOverlay'), desc: t('modeOverlayDesc') },
               { id: 'full',    label: t('modeFull'),    desc: t('modeFullDesc') },
             ].map((m) => {
-              const active = settings.mode === m.id;
+              const active = mode === m.id;
               return (
                 <button
                   key={m.id}
                   onClick={() => onChange('mode', m.id)}
-                  className={`px-2 py-2 text-left transition-all duration-150
+                  aria-pressed={active}
+                  aria-label={`${m.label} ${m.desc}`}
+                  className={`min-h-11 cursor-pointer rounded-full border px-3 py-2 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
                     ${active
-                      ? 'bg-primary/10 ring-1 ring-primary text-primary'
-                      : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+                      ? 'border-primary bg-primary text-primary-foreground shadow-[0_0_18px_hsl(var(--primary)/0.12)]'
+                      : 'border-border/65 bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                 >
-                  <div className="font-mono text-[9px] tracking-widest uppercase font-bold">{m.label}</div>
-                  <div className="font-mono text-[8px] text-muted-foreground mt-0.5 leading-tight">{m.desc}</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]">{m.label}</div>
                 </button>
               );
             })}
           </div>
-          {settings.mode === 'overlay' && (
-            <p className="font-mono text-[8px] text-muted-foreground/60 tracking-widest uppercase leading-relaxed">
-              {t('drawHint') || 'Draw on canvas to select subject'}
-            </p>
-          )}
         </Section>
 
-        {/* ── Characters ── */}
-        <Section label={t('characters')}>
+        {/* ── Selection Tools (overlay only) ── */}
+        {mode === 'overlay' && (
+          <Section label={t('selectionTool')}>
+            <div className="grid grid-cols-3 gap-1">
+              {[
+                { id: 'rect',     icon: Square,  label: t('shapeRect') },
+                { id: 'circle',   icon: Circle,  label: t('shapeEllipse') },
+                { id: 'freehand', icon: PenLine, label: t('shapeFree') },
+              ].map(({ id, icon: Icon, label }) => (
+                <button
+                  key={id}
+                  onClick={() => onShapeModeChange(id)}
+                  aria-pressed={shapeMode === id}
+                  aria-label={label}
+                  className={`flex min-h-12 cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border px-1 py-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+                    ${shapeMode === id
+                      ? 'bg-primary text-primary-foreground ring-1 ring-primary border-primary'
+                      : 'bg-muted text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/80'}`}
+                >
+                  <Icon className="w-3 h-3" />
+                  <span className="max-w-full truncate font-mono text-[7px] tracking-widest uppercase">{label}</span>
+                </button>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ── ASCII Color ── */}
+        <Section label={t('asciiColor')}>
+          <ColorPicker
+            value={settings.colorMode}
+            monoColor={settings.monoColor}
+            onModeChange={(v) => onChange('colorMode', v)}
+            onMonoColorChange={(v) => onChange('monoColor', v)}
+          />
+        </Section>
+
+        {/* ── ASCII Characters ── */}
+        <Section label={t('asciiCharacters')}>
           <CharSetPicker
             charSet={settings.charSet}
             customChars={settings.customChars}
@@ -73,66 +115,8 @@ export default function EditorPanel({ settings, onChange, onReset, onResetEffect
           />
         </Section>
 
-        {/* ── Light & Tone ── */}
-        <Section label={t('lightTone')}>
-          <ControlSlider label={t('brightness')} value={settings.brightness} min={0} max={100} onChange={(v) => onChange('brightness', v)} />
-          <ControlSlider label={t('contrast')}   value={settings.contrast}   min={0} max={100} onChange={(v) => onChange('contrast', v)} />
-          <ToggleRow label={t('invertLight')} value={settings.invertLight} onChange={(v) => onChange('invertLight', v)} />
-        </Section>
-
-        {/* ── Selection Tools (overlay only) ── */}
-        {settings.mode === 'overlay' && (
-          <Section label="Selection Tool">
-            <div className="grid grid-cols-3 gap-1">
-              {[
-                { id: 'rect',     icon: Square,  label: 'RECT' },
-                { id: 'circle',   icon: Circle,  label: 'ELLIPSE' },
-                { id: 'freehand', icon: PenLine, label: 'FREE' },
-              ].map(({ id, icon: Icon, label }) => (
-                <button
-                  key={id}
-                  onClick={() => onShapeModeChange(id)}
-                  className={`flex flex-col items-center gap-1 py-2 transition-all duration-150 border
-                    ${shapeMode === id
-                      ? 'bg-primary/10 ring-1 ring-primary text-primary border-primary/30'
-                      : 'bg-muted text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/80'}`}
-                >
-                  <Icon className="w-3 h-3" />
-                  <span className="font-mono text-[7px] tracking-widest">{label}</span>
-                </button>
-              ))}
-            </div>
-            {hasSelection && (
-              <button
-                onClick={onClearSelection}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 font-mono text-[8px] tracking-widest uppercase text-muted-foreground hover:text-destructive transition-colors border border-transparent hover:border-destructive/30"
-              >
-                <X className="w-2.5 h-2.5" />
-                Clear Selection
-              </button>
-            )}
-            {shapeMode === 'circle' && (
-              <p className="font-mono text-[7px] text-muted-foreground/40 tracking-widest uppercase">SHIFT = perfect circle</p>
-            )}
-          </Section>
-        )}
-
-        {/* ── Background (overlay only) ── */}
-        {settings.mode === 'overlay' && (
-          <Section label={t('background')}>
-            <ControlSlider label={t('bgBlur')} value={settings.bgBlur} min={0} max={12} onChange={(v) => onChange('bgBlur', v)} displayValue={`${settings.bgBlur}px`} />
-            <ControlSlider label={t('bgDim')}  value={settings.bgDim}  min={0} max={80} onChange={(v) => onChange('bgDim', v)}  displayValue={`${settings.bgDim}%`} />
-          </Section>
-        )}
-
-        {/* ── Effects ── */}
-        <Section label={t('effects')}>
-          <ControlSlider label={t('glow')}     value={settings.glowStrength}     min={0} max={100} onChange={(v) => onChange('glowStrength', v)} />
-          <ControlSlider label={t('vignette')} value={settings.vignetteStrength} min={0} max={100} onChange={(v) => onChange('vignetteStrength', v)} />
-        </Section>
-
-        {/* ── Resolution ── */}
-        <Section label={t('resolution')}>
+        {/* ── ASCII Density ── */}
+        <Section label={t('asciiDensity')}>
           <ControlSlider
             label={t('columns')}
             value={settings.resolution}
@@ -142,14 +126,33 @@ export default function EditorPanel({ settings, onChange, onReset, onResetEffect
           />
         </Section>
 
+        {/* ── ASCII Light & Tone ── */}
+        <Section label={t('asciiLightTone')}>
+          <ControlSlider label={t('brightness')} value={settings.brightness} min={0} max={100} onChange={(v) => onChange('brightness', v)} />
+          <ControlSlider label={t('contrast')}   value={settings.contrast}   min={0} max={100} onChange={(v) => onChange('contrast', v)} />
+          <ControlSlider label={t('glow')}     value={settings.glowStrength}     min={0} max={100} onChange={(v) => onChange('glowStrength', v)} />
+          <ToggleRow label={t('invertLight')} value={settings.invertLight} onChange={(v) => onChange('invertLight', v)} />
+        </Section>
+
+        {/* ── Image Layer ── */}
+        <Section label={t('imageLayer')}>
+          {mode === 'overlay' && (
+            <>
+            <ControlSlider label={t('bgBlur')} value={settings.bgBlur} min={0} max={12} onChange={(v) => onChange('bgBlur', v)} displayValue={`${settings.bgBlur}px`} />
+            <ControlSlider label={t('bgDim')}  value={settings.bgDim}  min={0} max={80} onChange={(v) => onChange('bgDim', v)}  displayValue={`${settings.bgDim}%`} />
+            </>
+          )}
+          <ControlSlider label={t('vignette')} value={settings.vignetteStrength} min={0} max={100} onChange={(v) => onChange('vignetteStrength', v)} />
+        </Section>
+
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border space-y-2 flex-shrink-0">
+      <div className="flex-shrink-0 space-y-2 border-t border-border/80 px-4 py-3">
         <button
           onClick={handleDownload}
           disabled={!hasResult}
-          className="w-full relative flex items-center justify-center gap-2 py-2.5 font-mono text-[10px] tracking-[0.25em] uppercase transition-all duration-200 bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-25 disabled:cursor-not-allowed group overflow-hidden"
+          className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-secondary py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-secondary-foreground transition-all duration-200 hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-25"
         >
           <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <Download className="w-3.5 h-3.5" />
@@ -157,14 +160,14 @@ export default function EditorPanel({ settings, onChange, onReset, onResetEffect
         </button>
         <button
           onClick={onResetEffects}
-          className="w-full flex items-center justify-center gap-2 py-2 font-mono text-[9px] tracking-[0.25em] uppercase text-muted-foreground hover:text-amber-400 transition-colors duration-200 border border-transparent hover:border-border"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-transparent py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <Eraser className="w-3 h-3" />
           {t('resetEffects') || 'RESET EFFECTS'}
         </button>
         <button
           onClick={onReset}
-          className="w-full flex items-center justify-center gap-2 py-2 font-mono text-[9px] tracking-[0.25em] uppercase text-muted-foreground hover:text-primary transition-colors duration-200 border border-transparent hover:border-border"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-transparent py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <RefreshCw className="w-3 h-3" />
           {t('newImage')}
@@ -176,9 +179,9 @@ export default function EditorPanel({ settings, onChange, onReset, onResetEffect
 
 function Section({ label, children }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[8px] tracking-[0.35em] text-muted-foreground/60 uppercase whitespace-nowrap">{label}</span>
+        <span className="font-mono text-[9px] tracking-[0.24em] text-foreground/70 uppercase whitespace-nowrap">{label}</span>
         <div className="flex-1 h-px bg-border/60" />
       </div>
       <div className="space-y-2">{children}</div>
@@ -192,9 +195,11 @@ function ToggleRow({ label, value, onChange }) {
       <span className="font-mono text-[10px] text-muted-foreground tracking-wider uppercase">{label}</span>
       <button
         onClick={() => onChange(!value)}
-        className={`relative flex-shrink-0 w-8 h-4 transition-colors duration-200 ${value ? 'bg-primary' : 'bg-secondary border border-border'}`}
+        aria-pressed={value}
+        aria-label={label}
+        className={`relative h-4 w-8 flex-shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${value ? 'bg-primary' : 'bg-secondary border border-border'}`}
       >
-        <span className={`absolute top-0.5 w-3 h-3 transition-all duration-200 ${value ? 'left-4 bg-primary-foreground' : 'left-0.5 bg-muted-foreground'}`} />
+        <span className={`absolute top-0.5 h-3 w-3 rounded-full transition-all duration-200 ${value ? 'left-4 bg-primary-foreground' : 'left-0.5 bg-muted-foreground'}`} />
       </button>
     </div>
   );

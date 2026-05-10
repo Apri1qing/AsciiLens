@@ -14,6 +14,7 @@ export default function ControlSlider({ label, value, min, max, onChange, displa
         </span>
       </div>
       <input
+        aria-label={label}
         type="range"
         min={min}
         max={max}

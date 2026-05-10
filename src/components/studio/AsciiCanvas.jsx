@@ -31,7 +31,9 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
   const processCanvasRef = useRef(null);
   const outputRef = useRef(null);
   const animFrameRef = useRef(null);
+  const containerRef = useRef(null);
   const [imgAspect, setImgAspect] = useState(null);
+  const [stageSize, setStageSize] = useState(null);
 
   useImperativeHandle(ref, () => ({
     download: () => {
@@ -45,15 +47,25 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
   }));
 
   useEffect(() => {
-    if (!image) return;
+    if (!image) {
+      onProcessingChange(false);
+      onResult(null);
+      return;
+    }
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    let cancelled = false;
     onProcessingChange(true);
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
+      if (cancelled) return;
       setImgAspect(img.width / img.height);
       animFrameRef.current = requestAnimationFrame(() => {
+        if (cancelled || !processCanvasRef.current || !outputRef.current) {
+          onProcessingChange(false);
+          return;
+        }
         if (settings.mode === 'full') {
           renderFull(img, settings, processCanvasRef, outputRef, onResult);
         } else {
@@ -62,22 +74,56 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
         onProcessingChange(false);
       });
     };
+    img.onerror = () => {
+      if (cancelled) return;
+      onProcessingChange(false);
+      onResult(null);
+    };
     img.src = image.url;
 
-    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+    return () => {
+      cancelled = true;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      onProcessingChange(false);
+    };
   }, [image, settings]);
 
+  useEffect(() => {
+    if (!imgAspect || !containerRef.current) return;
+
+    const updateStageSize = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect?.width || !rect?.height) return;
+      const availableWidth = rect.width;
+      const availableHeight = rect.height;
+      const availableAspect = availableWidth / availableHeight;
+
+      const nextSize = availableAspect > imgAspect
+        ? { width: availableHeight * imgAspect, height: availableHeight }
+        : { width: availableWidth, height: availableWidth / imgAspect };
+
+      setStageSize({
+        width: Math.max(1, Math.floor(nextSize.width)),
+        height: Math.max(1, Math.floor(nextSize.height)),
+      });
+    };
+
+    updateStageSize();
+    const resizeObserver = new ResizeObserver(updateStageSize);
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, [imgAspect]);
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center" style={{ minHeight: '400px' }}>
+    <div ref={containerRef} className="relative w-full h-full min-h-0 flex items-center justify-center">
       <canvas ref={processCanvasRef} className="hidden" />
-      {/* Wrapper sized to exact image aspect ratio — selector overlays align perfectly */}
+      {/* Wrapper sized to exact image aspect ratio so selector overlays align perfectly. */}
       <div
         className="relative"
-        style={imgAspect
+        style={imgAspect && stageSize
           ? {
-              width: `min(100%, calc((100vh - 160px) * ${imgAspect}))`,
-              aspectRatio: `${imgAspect}`,
-              maxWidth: '100%',
+              width: `${stageSize.width}px`,
+              height: `${stageSize.height}px`,
             }
           : { position: 'relative', display: 'inline-block' }
         }
@@ -93,14 +139,28 @@ export default AsciiCanvas;
 
 // ─── Shared utilities ─────────────────────────────────────────────────────────
 
-function getColor(colorMode, r, g, b, alpha) {
+function hexToRgb(hex) {
+  const normalized = /^#[0-9a-f]{6}$/i.test(hex || '') ? hex : '#fffdfd';
+  const value = Number.parseInt(normalized.slice(1), 16);
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function getColor(colorMode, r, g, b, alpha, monoColor = '#fffdfd') {
   if (colorMode === 'original') return `rgba(${r},${g},${b},${alpha})`;
-  if (colorMode === 'gold')     return `rgba(255,215,100,${alpha})`;
-  if (colorMode === 'white')    return `rgba(240,238,230,${alpha})`;
-  if (colorMode === 'green')    return `rgba(80,255,120,${alpha})`;
-  if (colorMode === 'neon')     return `rgba(80,200,255,${alpha})`;
-  if (colorMode === 'cyan')     return `rgba(100,240,230,${alpha})`;
-  return `rgba(240,238,230,${alpha})`;
+  if (colorMode === 'mono') {
+    const mono = hexToRgb(monoColor);
+    return `rgba(${mono.r},${mono.g},${mono.b},${alpha})`;
+  }
+  if (colorMode === 'lime') return `rgba(255,165,198,${alpha})`;
+  if (colorMode === 'white') return `rgba(255,253,253,${alpha})`;
+  if (colorMode === 'green') return `rgba(139,214,67,${alpha})`;
+  if (colorMode === 'neon' || colorMode === 'cyan') return `rgba(0,0,238,${alpha})`;
+  if (colorMode === 'coral') return `rgba(255,244,194,${alpha})`;
+  return `rgba(255,253,253,${alpha})`;
 }
 
 function drawVignette(ctx, w, h, strength) {
@@ -112,10 +172,10 @@ function drawVignette(ctx, w, h, strength) {
 }
 
 // ─── Full ASCII rendering ─────────────────────────────────────────────────────
-// Renders entire image as ASCII art on black background
+// Renders entire image as ASCII art on an ink background.
 
 function renderFull(img, settings, processCanvasRef, outputRef, onResult) {
-  const { resolution, brightness, contrast, invertLight, vignetteStrength, glowStrength, colorMode } = settings;
+  const { resolution, brightness, contrast, invertLight, vignetteStrength, glowStrength, colorMode, monoColor } = settings;
   const chars = getCharSet(settings);
 
   const cols = Math.max(40, Math.min(200, Math.round(resolution)));
@@ -137,8 +197,8 @@ function renderFull(img, settings, processCanvasRef, outputRef, onResult) {
   oCanvas.height = img.height;
   const oCtx = oCanvas.getContext('2d');
 
-  // Black background
-  oCtx.fillStyle = '#080a0c';
+  // Ink background
+  oCtx.fillStyle = '#000000';
   oCtx.fillRect(0, 0, img.width, img.height);
 
   const cellW = img.width / cols;
@@ -160,7 +220,7 @@ function renderFull(img, settings, processCanvasRef, outputRef, onResult) {
 
       const cx = (col + 0.5) * cellW;
       const cy = (row + 0.5) * cellH;
-      const color = getColor(colorMode, r, g, b, 1);
+      const color = getColor(colorMode, r, g, b, 1, monoColor);
 
       if (glowStrength > 0) {
         oCtx.shadowColor = color;
@@ -183,26 +243,18 @@ function renderFull(img, settings, processCanvasRef, outputRef, onResult) {
 
 function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
   const {
-    resolution, brightness, contrast, invertLight,
-    vignetteStrength, glowStrength, colorMode, bgBlur, bgDim, selectionRect,
+    vignetteStrength, bgBlur, bgDim, selectionRect, selectionShapes, activeSelectionId,
   } = settings;
-  const chars = getCharSet(settings);
-
-  const cols = Math.max(40, Math.min(160, Math.round(resolution)));
-  const rows = Math.round(cols / (img.width / img.height) * 0.55);
-
-  const pCanvas = processCanvasRef.current;
-  pCanvas.width = cols;
-  pCanvas.height = rows;
-  const pCtx = pCanvas.getContext('2d', { willReadFrequently: true });
-  pCtx.filter = `brightness(${0.5 + brightness / 100}) contrast(${0.5 + contrast / 100})`;
-  pCtx.drawImage(img, 0, 0, cols, rows);
-  const { data } = pCtx.getImageData(0, 0, cols, rows);
-
-  // If no selection, render ASCII over full image; otherwise mask to selection
-  const subjectMask = selectionRect
-    ? generateSelectionMask(cols, rows, selectionRect)
-    : null;
+  const selections = Array.isArray(selectionShapes) && selectionShapes.length > 0
+    ? selectionShapes
+    : selectionRect
+      ? [selectionRect]
+      : [];
+  const orderedSelections = [...selections].sort((a, b) => {
+    if (a.id === activeSelectionId) return 1;
+    if (b.id === activeSelectionId) return -1;
+    return 0;
+  });
 
   const oCanvas = outputRef.current;
   oCanvas.width = img.width;
@@ -217,6 +269,32 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
   oCtx.drawImage(img, 0, 0, img.width, img.height);
   oCtx.restore();
 
+  orderedSelections.forEach(selection => {
+    drawAsciiOverlaySelection(img, selection, { ...settings, ...(selection.settings || {}) }, processCanvasRef, oCtx);
+  });
+
+  oCtx.shadowBlur = 0;
+  if (vignetteStrength > 0) drawVignette(oCtx, img.width, img.height, vignetteStrength);
+  onResult && onResult({ done: true });
+}
+
+function drawAsciiOverlaySelection(img, selection, style, processCanvasRef, oCtx) {
+  const {
+    resolution, brightness, contrast, invertLight, glowStrength, colorMode, monoColor,
+  } = style;
+  const chars = getCharSet(style);
+  const cols = Math.max(30, Math.min(200, Math.round(resolution)));
+  const rows = Math.round(cols / (img.width / img.height) * 0.55);
+
+  const pCanvas = processCanvasRef.current;
+  pCanvas.width = cols;
+  pCanvas.height = rows;
+  const pCtx = pCanvas.getContext('2d', { willReadFrequently: true });
+  pCtx.clearRect(0, 0, cols, rows);
+  pCtx.filter = `brightness(${0.5 + brightness / 100}) contrast(${0.5 + contrast / 100})`;
+  pCtx.drawImage(img, 0, 0, cols, rows);
+  const { data } = pCtx.getImageData(0, 0, cols, rows);
+
   const cellW = img.width / cols;
   const cellH = img.height / rows;
   const fontSize = Math.max(6, Math.min(cellW * 1.1, cellH * 1.0));
@@ -226,8 +304,9 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      // If mask exists, skip cells outside selection
-      if (subjectMask && subjectMask[row * cols + col] < 0.5) continue;
+      const nx = (col + 0.5) / cols;
+      const ny = (row + 0.5) / rows;
+      if (selection && !pointInSelection(nx, ny, selection)) continue;
 
       const idx = (row * cols + col) * 4;
       const r = data[idx], g = data[idx + 1], b = data[idx + 2];
@@ -240,7 +319,7 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
 
       const cx = (col + 0.5) * cellW;
       const cy = (row + 0.5) * cellH;
-      const color = getColor(colorMode, r, g, b, 1);
+      const color = getColor(colorMode, r, g, b, 1, monoColor);
 
       if (glowStrength > 0) {
         oCtx.shadowColor = color;
@@ -252,44 +331,29 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
       oCtx.fillText(ch, cx, cy);
     }
   }
-
-  oCtx.shadowBlur = 0;
-  if (vignetteStrength > 0) drawVignette(oCtx, img.width, img.height, vignetteStrength);
-  onResult && onResult({ done: true });
 }
 
 // ─── Subject Mask generators ──────────────────────────────────────────────────
 
-function generateSelectionMask(cols, rows, sel) {
-  const mask = new Float32Array(cols * rows);
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const nx = (col + 0.5) / cols;
-      const ny = (row + 0.5) / rows;
-      let inside = false;
-
-      if (sel.type === 'rect' || !sel.type) {
-        // legacy rect support
-        const s = sel;
-        inside = nx >= s.x && nx <= s.x + s.w && ny >= s.y && ny <= s.y + s.h;
-
-      } else if (sel.type === 'circle') {
-        const rx = sel.rx ?? sel.r ?? 0;
-        const ry = sel.ry ?? sel.r ?? 0;
-        if (rx > 0 && ry > 0) {
-          const dx = (nx - sel.cx) / rx;
-          const dy = (ny - sel.cy) / ry;
-          inside = dx * dx + dy * dy <= 1;
-        }
-
-      } else if (sel.type === 'freehand' && sel.points && sel.points.length >= 3) {
-        inside = pointInPolygon(nx, ny, sel.points);
-      }
-
-      mask[row * cols + col] = inside ? 1 : 0;
-    }
+function pointInSelection(nx, ny, sel) {
+  if (sel.type === 'rect' || !sel.type) {
+    return nx >= sel.x && nx <= sel.x + sel.w && ny >= sel.y && ny <= sel.y + sel.h;
   }
-  return mask;
+
+  if (sel.type === 'circle') {
+    const rx = sel.rx ?? sel.r ?? 0;
+    const ry = sel.ry ?? sel.r ?? 0;
+    if (rx <= 0 || ry <= 0) return false;
+    const dx = (nx - sel.cx) / rx;
+    const dy = (ny - sel.cy) / ry;
+    return dx * dx + dy * dy <= 1;
+  }
+
+  if (sel.type === 'freehand' && sel.points && sel.points.length >= 3) {
+    return pointInPolygon(nx, ny, sel.points);
+  }
+
+  return false;
 }
 
 // Ray casting algorithm — point in polygon

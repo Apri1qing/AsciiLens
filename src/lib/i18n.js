@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     // Header
-    appName: 'ACID LENS',
+    appName: 'ASCII LENS',
     appSubtitle: 'Art Studio',
     tagline: 'Subject-Aware · Cinematic · ASCII',
     version: 'v2.0',
@@ -11,7 +11,7 @@ export const translations = {
     dropTitle: '[ Drop Image Here ]',
     dropDragging: '[ Release to Upload ]',
     dropSub: 'or click to browse ·· JPG · PNG · WEBP',
-    heroSub: '── Subject-Aware ASCII Photography ──',
+    heroSub: 'Clear structure · strong visuals · no fluff',
     featFull: 'Full ASCII',
     featOverlay: 'Overlay Mode',
     featExport: 'Export PNG',
@@ -21,7 +21,7 @@ export const translations = {
     rendering: 'Rendering',
 
     // Render mode
-    modeLabel: 'Render Mode',
+    modeLabel: 'Render',
     modeFull: 'Full ASCII',
     modeOverlay: 'Subject Overlay',
     modeFullDesc: 'Entire image as ASCII',
@@ -32,7 +32,10 @@ export const translations = {
     autoDetect: 'Auto',
     manualSelect: 'Manual',
     clearSelection: 'Clear',
-    drawHint: 'Draw a rectangle on the image to define the subject area',
+    selectionTool: 'Selection',
+    shapeRect: 'Rect',
+    shapeEllipse: 'Ellipse',
+    shapeFree: 'Free',
 
     // Sections
     characters: 'Characters',
@@ -42,6 +45,12 @@ export const translations = {
     background: 'Background',
     effects: 'Effects',
     resolution: 'Resolution',
+    asciiColor: 'Color',
+    asciiCharacters: 'Characters',
+    asciiDensity: 'Density',
+    asciiLightTone: 'Tone',
+    imageBackground: 'Image Background',
+    imageLayer: 'Image',
 
     // Sliders
     brightness: 'Brightness',
@@ -62,17 +71,23 @@ export const translations = {
     ready: 'READY',
 
     // Color labels
-    colorFilm: 'Film',
-    colorGold: 'Gold',
-    colorMatrix: 'Matrix',
-    colorNeon: 'Neon',
-    colorIce: 'Ice',
+    colorOriginal: 'Original',
+    colorOriginalDesc: 'Use image RGB',
+    colorMono: 'Color',
+    colorMonoDesc: 'Pick one color',
+    monoColorPicker: 'Color picker',
+    selectMonoColor: 'Select color',
+    colorPearl: 'White',
+    colorAcid: 'Pink',
+    colorVerdant: 'Green',
+    colorCyan: 'Blue',
+    colorCoral: 'Cream',
     colorRgb: 'Color',
-    colorFilmDesc: 'Classic',
-    colorGoldDesc: 'Cinematic',
-    colorMatrixDesc: 'Hacker',
-    colorNeonDesc: 'Cyber',
-    colorIceDesc: 'Cryo',
+    colorPearlDesc: 'Clean',
+    colorAcidDesc: 'Poch',
+    colorVerdantDesc: 'Object',
+    colorCyanDesc: 'Accent',
+    colorCoralDesc: 'CTA',
     colorRgbDesc: 'RGB',
 
     // Charset
@@ -86,7 +101,7 @@ export const translations = {
 
   zh: {
     // Header
-    appName: 'ACID LENS',
+    appName: 'ASCII LENS',
     appSubtitle: '艺术工作室',
     resetEffects: '重置效果',
     tagline: '主体感知 · 电影风格 · ASCII',
@@ -96,7 +111,7 @@ export const translations = {
     dropTitle: '[ 拖拽图片至此 ]',
     dropDragging: '[ 松开以上传 ]',
     dropSub: '或点击选择文件 ·· JPG · PNG · WEBP',
-    heroSub: '── 主体感知 ASCII 摄影 ──',
+    heroSub: '清晰结构 · 强视觉 · 不冗余',
     featFull: '全图ASCII',
     featOverlay: '叠加模式',
     featExport: '导出PNG',
@@ -106,7 +121,7 @@ export const translations = {
     rendering: '渲染中',
 
     // Render mode
-    modeLabel: '渲染模式',
+    modeLabel: '渲染',
     modeFull: '全图ASCII',
     modeOverlay: '主体叠加',
     modeFullDesc: '整张图片转为ASCII',
@@ -117,7 +132,10 @@ export const translations = {
     autoDetect: '自动',
     manualSelect: '手动',
     clearSelection: '清除',
-    drawHint: '在图片上绘制矩形以手动框选主体区域',
+    selectionTool: '选区',
+    shapeRect: '矩形',
+    shapeEllipse: '椭圆',
+    shapeFree: '自由',
 
     // Sections
     characters: '字符集',
@@ -127,6 +145,12 @@ export const translations = {
     background: '背景',
     effects: '特效',
     resolution: '分辨率',
+    asciiColor: '颜色',
+    asciiCharacters: '字符',
+    asciiDensity: '密度',
+    asciiLightTone: '色调',
+    imageBackground: '图片背景',
+    imageLayer: '图片',
 
     // Sliders
     brightness: '亮度',
@@ -147,17 +171,23 @@ export const translations = {
     ready: '就绪',
 
     // Color labels
-    colorFilm: '胶片',
-    colorGold: '黄金',
-    colorMatrix: '矩阵',
-    colorNeon: '霓虹',
-    colorIce: '冰蓝',
+    colorOriginal: '原图颜色',
+    colorOriginalDesc: '使用图片原色',
+    colorMono: '颜色',
+    colorMonoDesc: '选择一种颜色',
+    monoColorPicker: '颜色选择器',
+    selectMonoColor: '选择颜色',
+    colorPearl: '白色',
+    colorAcid: '粉色',
+    colorVerdant: '绿色',
+    colorCyan: '蓝色',
+    colorCoral: '奶油',
     colorRgb: '彩色',
-    colorFilmDesc: '经典',
-    colorGoldDesc: '电影感',
-    colorMatrixDesc: '黑客',
-    colorNeonDesc: '赛博',
-    colorIceDesc: '极寒',
+    colorPearlDesc: '干净',
+    colorAcidDesc: 'Poch',
+    colorVerdantDesc: '物件',
+    colorCyanDesc: '强调',
+    colorCoralDesc: '按钮',
     colorRgbDesc: 'RGB',
 
     // Charset
