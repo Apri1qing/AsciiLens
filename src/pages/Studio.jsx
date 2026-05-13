@@ -23,6 +23,8 @@ const DEFAULT_SETTINGS = {
   glowStrength: 0,
   bgBlur: 0,
   bgDim: 20,
+  imageFilterMode: 'original',
+  imageFilterColor: '#fffdfd',
 };
 
 const SELECTION_SETTING_KEYS = new Set([
@@ -34,6 +36,7 @@ const SELECTION_SETTING_KEYS = new Set([
   'contrast',
   'resolution',
   'invertLight',
+  'glowStrength',
 ]);
 
 function getSelectionStyleDefaults(settings) {
@@ -46,6 +49,7 @@ function getSelectionStyleDefaults(settings) {
     contrast: settings.contrast,
     resolution: settings.resolution,
     invertLight: settings.invertLight,
+    glowStrength: settings.glowStrength,
   };
 }
 
@@ -194,7 +198,12 @@ export default function Studio() {
                 className="relative z-10 flex h-full min-h-0 w-full items-center justify-center"
               >
                 {/* Canvas + overlay selector wrapper */}
-                <div className="acid-stage-shell relative flex h-full w-full items-center justify-center">
+                <div
+                  className="acid-stage-shell relative flex h-full w-full items-center justify-center"
+                  onPointerDown={() => {
+                    if (settings.mode === 'overlay') setActiveSelectionId(null);
+                  }}
+                >
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-5 border-t border-l border-primary/50 z-10 pointer-events-none" style={{left:0,transform:'none'}} />
                   <span className="absolute top-0 right-0 w-5 h-5 border-t border-r border-primary/50 z-10 pointer-events-none" />
                   <span className="absolute bottom-0 left-0 w-5 h-5 border-b border-l border-primary/50 z-10 pointer-events-none" />

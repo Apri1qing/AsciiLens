@@ -1,8 +1,28 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useReducedMotion } from 'framer-motion';
 
-const GLYPHS = ['.', '.', '.', 'o', '*', '+', '@', '#'];
-const FRAME_INTERVAL = 1000 / 42;
+const FRAME_INTERVAL = 1000 / 32;
+const GLYPHS = ['.', ':', '+', '*', '#', '%', '@'];
+
+const SPECTRUM_BANDS = [
+  { id: 'red', label: 'RED', chars: '@@@@####****++++::::....' },
+  { id: 'pink', label: 'PINK', chars: '%%%%####****++++::::....' },
+  { id: 'gold', label: 'GOLD', chars: '####****++++::::....' },
+  { id: 'green', label: 'GREEN', chars: '****++++::::....' },
+  { id: 'cyan', label: 'CYAN', chars: '++++::::....' },
+  { id: 'blue', label: 'BLUE', chars: '::::....' },
+  { id: 'violet', label: 'VIOLET', chars: '....::::++++' },
+];
+
+const PRISM_ART = [
+  '              /\\',
+  '             /::\\',
+  '            /::::\\',
+  '           /::..::\\',
+  '          /::....::\\',
+  '         /::......::\\',
+  '        /____::::____\\',
+].join('\n');
 
 function seededRandom(seed) {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
@@ -10,45 +30,24 @@ function seededRandom(seed) {
 }
 
 function buildParticles() {
-  const particles = [];
-  const sphereCount = 240;
-  const innerCount = 78;
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  return Array.from({ length: 154 }, (_, index) => {
+    const band = index % SPECTRUM_BANDS.length;
+    return {
+      band,
+      progress: seededRandom(index + 11),
+      drift: seededRandom(index + 31) * 0.8 + 0.35,
+      phase: seededRandom(index + 51) * Math.PI * 2,
+      glyph: GLYPHS[Math.floor(seededRandom(index + 71) * GLYPHS.length)],
+      size: 7 + seededRandom(index + 91) * 4,
+      alpha: 0.34 + seededRandom(index + 111) * 0.52,
+    };
+  });
+}
 
-  for (let i = 0; i < sphereCount; i += 1) {
-    const y = 1 - (i / (sphereCount - 1)) * 2;
-    const radius = Math.sqrt(1 - y * y);
-    const theta = goldenAngle * i;
-    particles.push({
-      x: Math.cos(theta) * radius,
-      y,
-      z: Math.sin(theta) * radius,
-      layer: 'surface',
-      glyph: GLYPHS[Math.floor(seededRandom(i + 1) * GLYPHS.length)],
-      size: 7 + seededRandom(i + 11) * 4,
-      phase: seededRandom(i + 21) * Math.PI * 2,
-      drift: 0.018 + seededRandom(i + 31) * 0.026,
-    });
-  }
-
-  for (let i = 0; i < innerCount; i += 1) {
-    const a = seededRandom(i + 101) * Math.PI * 2;
-    const z = seededRandom(i + 201) * 2 - 1;
-    const r = Math.cbrt(seededRandom(i + 301)) * 0.82;
-    const xy = Math.sqrt(1 - z * z);
-    particles.push({
-      x: Math.cos(a) * xy * r,
-      y: Math.sin(a) * xy * r,
-      z: z * r,
-      layer: 'core',
-      glyph: seededRandom(i + 401) > 0.72 ? '*' : '.',
-      size: 4.5 + seededRandom(i + 501) * 3.5,
-      phase: seededRandom(i + 601) * Math.PI * 2,
-      drift: 0.03 + seededRandom(i + 701) * 0.05,
-    });
-  }
-
-  return particles;
+function cssHsla(name, alpha) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const [h, s, l] = raw.split(/\s+/);
+  return `hsla(${h}, ${s}, ${l}, ${alpha})`;
 }
 
 export default function AsciiParticleOrb() {
@@ -68,9 +67,20 @@ export default function AsciiParticleOrb() {
     let start = performance.now();
     let lastDraw = 0;
 
+    const colors = {
+      white: cssHsla('--spectrum-white', 0.9),
+      red: 'rgba(255, 104, 126, 0.9)',
+      pink: cssHsla('--primary', 0.92),
+      gold: cssHsla('--secondary', 0.9),
+      green: cssHsla('--spectrum-green', 0.88),
+      cyan: 'rgba(142, 245, 255, 0.86)',
+      blue: cssHsla('--accent', 0.82),
+      violet: 'rgba(185, 167, 255, 0.84)',
+    };
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 1.35);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.3);
       width = Math.max(1, Math.floor(rect.width * dpr));
       height = Math.max(1, Math.floor(rect.height * dpr));
       canvas.width = width;
@@ -88,109 +98,41 @@ export default function AsciiParticleOrb() {
       const elapsed = reduceMotion ? 0 : (now - start) / 1000;
       const cssWidth = width / dpr;
       const cssHeight = height / dpr;
-      const cx = cssWidth / 2;
-      const cy = cssHeight / 2;
-      const radius = Math.min(cssWidth, cssHeight) * 0.43;
-      const rotY = elapsed * 0.28;
-      const rotX = -0.23 + Math.sin(elapsed * 0.18) * 0.05;
+      const prismX = cssWidth * 0.42;
+      const prismY = cssHeight * 0.52;
+      const beamStartX = prismX + cssWidth * 0.07;
+      const beamEndX = cssWidth * 0.92;
 
       ctx.clearRect(0, 0, cssWidth, cssHeight);
-      ctx.globalCompositeOperation = 'source-over';
-
-      const glow = ctx.createRadialGradient(cx, cy, radius * 0.12, cx, cy, radius * 1.38);
-      glow.addColorStop(0, 'rgba(255, 253, 253, 0.16)');
-      glow.addColorStop(0.46, 'rgba(255, 165, 198, 0.10)');
-      glow.addColorStop(1, 'rgba(255, 165, 198, 0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.42, 0, Math.PI * 2);
-      ctx.fill();
-
-      const projected = particles.map((particle, index) => {
-        const wave = Math.sin(elapsed * (0.8 + particle.drift) + particle.phase);
-        const drift = particle.layer === 'core' ? wave * 0.075 : wave * 0.022;
-        const x0 = particle.x + Math.cos(particle.phase) * drift;
-        const y0 = particle.y + Math.sin(particle.phase * 1.7) * drift;
-        const z0 = particle.z + Math.sin(particle.phase + elapsed * 0.62) * drift;
-
-        const cosY = Math.cos(rotY);
-        const sinY = Math.sin(rotY);
-        const x1 = x0 * cosY - z0 * sinY;
-        const z1 = x0 * sinY + z0 * cosY;
-
-        const cosX = Math.cos(rotX);
-        const sinX = Math.sin(rotX);
-        const y2 = y0 * cosX - z1 * sinX;
-        const z2 = y0 * sinX + z1 * cosX;
-
-        const perspective = 1.9 / (2.45 - z2);
-        const depth = (z2 + 1.15) / 2.3;
-        return {
-          index,
-          x: cx + x1 * radius * perspective,
-          y: cy + y2 * radius * perspective,
-          z: z2,
-          alpha: Math.max(0.08, Math.min(0.9, 0.18 + depth * 0.72)),
-          scale: Math.max(0.46, perspective * (0.75 + depth * 0.68)),
-          glyph: particle.glyph,
-          size: particle.size,
-          layer: particle.layer,
-          pulse: 0.5 + Math.sin(elapsed * 1.4 + particle.phase) * 0.5,
-        };
-      }).sort((a, b) => a.z - b.z);
-
       ctx.globalCompositeOperation = 'lighter';
-      ctx.shadowBlur = 0;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
-      projected.forEach((point) => {
-        const fontSize = point.size * point.scale;
-        const alpha = point.layer === 'core'
-          ? point.alpha * (0.78 + point.pulse * 0.35)
-          : point.alpha;
-        const dotSize = point.layer === 'core'
-          ? Math.max(1.05, fontSize * 0.2)
-          : Math.max(0.72, fontSize * 0.14);
+      particles.forEach((particle, index) => {
+        const band = SPECTRUM_BANDS[particle.band];
+        const direction = particle.band - (SPECTRUM_BANDS.length - 1) / 2;
+        const speed = reduceMotion ? 0 : elapsed * 0.03 * particle.drift;
+        const progress = (particle.progress + speed) % 1;
+        const x = beamStartX + (beamEndX - beamStartX) * progress;
+        const slope = direction * cssHeight * 0.032;
+        const wave = Math.sin(elapsed * 1.4 + particle.phase) * cssHeight * 0.006;
+        const y = prismY + slope * progress * 3.2 + wave;
+        const pulse = 0.72 + Math.sin(elapsed * 1.8 + particle.phase) * 0.28;
 
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 253, 253, ${alpha * 0.82})`;
-        ctx.fill();
-      });
+        ctx.font = `${particle.size}px "Space Mono", monospace`;
+        ctx.shadowColor = colors[band.id];
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = colors[band.id].replace(/[\d.]+\)$/u, `${particle.alpha * pulse})`);
+        ctx.fillText(particle.glyph, x, y);
 
-      projected.forEach((point) => {
-        const shouldDrawGlyph = point.layer === 'core'
-          ? point.index % 3 === 0
-          : point.index % 5 === 0;
-        if (!shouldDrawGlyph) return;
-
-        const fontSize = point.size * point.scale;
-        const alpha = point.layer === 'core'
-          ? point.alpha * (0.52 + point.pulse * 0.22)
-          : point.alpha * 0.48;
-
-        ctx.font = `${fontSize}px "Space Mono", monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(255, 253, 253, 0.55)';
-        ctx.shadowBlur = 5;
-        ctx.fillStyle = `rgba(255, 253, 253, ${alpha})`;
-        ctx.fillText(point.glyph, point.x, point.y);
-      });
-
-      projected.forEach((point) => {
-        if (point.layer === 'core' && point.pulse > 0.82 && point.index % 4 === 0) {
-          const fontSize = point.size * point.scale;
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, Math.max(0.8, fontSize * 0.2), 0, Math.PI * 2);
-          ctx.shadowBlur = 6;
-          ctx.fillStyle = `rgba(255, 253, 253, ${point.alpha * 0.28})`;
-          ctx.fill();
+        if (index % 8 === 0) {
+          ctx.font = `${particle.size + 1}px "Space Mono", monospace`;
+          ctx.fillText('.', x - 11, y + 2);
         }
       });
 
       ctx.shadowBlur = 0;
       ctx.globalCompositeOperation = 'source-over';
-
       if (!reduceMotion) frameId = requestAnimationFrame(draw);
     };
 
@@ -209,10 +151,26 @@ export default function AsciiParticleOrb() {
   }, [particles, reduceMotion]);
 
   return (
-    <div className="ascii-orb-showpiece" aria-hidden="true">
-      <div className="ascii-orb-showpiece__halo" />
-      <canvas ref={canvasRef} className="ascii-orb-showpiece__canvas" />
-      <div className="ascii-orb-showpiece__scan" />
+    <div className="ascii-prism-scene" aria-hidden="true">
+      <div className="ascii-prism-scene__halo" />
+      <div className="ascii-prism-scene__input">
+        <span>.............++++++++++++++==============</span>
+      </div>
+      <pre className="ascii-prism-scene__prism">{PRISM_ART}</pre>
+      <div className="ascii-prism-scene__core" />
+      <div className="ascii-prism-scene__spectrum">
+        {SPECTRUM_BANDS.map((band, index) => (
+          <pre
+            key={band.id}
+            className={`ascii-prism-scene__band ascii-prism-scene__band--${band.id}`}
+            style={{ '--band-index': index - 3 }}
+          >
+            {band.chars}
+          </pre>
+        ))}
+      </div>
+      <canvas ref={canvasRef} className="ascii-prism-scene__particles" />
+      <div className="ascii-prism-scene__caption">LIGHT / GLYPH / COLOR FIELD</div>
     </div>
   );
 }

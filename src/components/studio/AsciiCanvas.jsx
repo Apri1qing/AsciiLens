@@ -149,6 +149,10 @@ function hexToRgb(hex) {
   };
 }
 
+function clampChannel(value) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
 function getColor(colorMode, r, g, b, alpha, monoColor = '#fffdfd') {
   if (colorMode === 'original') return `rgba(${r},${g},${b},${alpha})`;
   if (colorMode === 'mono') {
@@ -243,7 +247,7 @@ function renderFull(img, settings, processCanvasRef, outputRef, onResult) {
 
 function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
   const {
-    vignetteStrength, bgBlur, bgDim, selectionRect, selectionShapes, activeSelectionId,
+    vignetteStrength, selectionRect, selectionShapes, activeSelectionId,
   } = settings;
   const selections = Array.isArray(selectionShapes) && selectionShapes.length > 0
     ? selectionShapes
@@ -261,13 +265,7 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
   oCanvas.height = img.height;
   const oCtx = oCanvas.getContext('2d');
 
-  // Background
-  oCtx.save();
-  oCtx.filter = bgBlur > 0
-    ? `blur(${bgBlur}px) brightness(${1 - bgDim / 200})`
-    : `brightness(${1 - bgDim / 200})`;
-  oCtx.drawImage(img, 0, 0, img.width, img.height);
-  oCtx.restore();
+  drawOverlayBackground(img, settings, processCanvasRef, oCtx);
 
   orderedSelections.forEach(selection => {
     drawAsciiOverlaySelection(img, selection, { ...settings, ...(selection.settings || {}) }, processCanvasRef, oCtx);
@@ -276,6 +274,49 @@ function renderOverlay(img, settings, processCanvasRef, outputRef, onResult) {
   oCtx.shadowBlur = 0;
   if (vignetteStrength > 0) drawVignette(oCtx, img.width, img.height, vignetteStrength);
   onResult && onResult({ done: true });
+}
+
+function drawOverlayBackground(img, settings, processCanvasRef, oCtx) {
+  const {
+    bgBlur = 0,
+    bgDim = 20,
+    imageFilterMode = 'original',
+    imageFilterColor = '#fffdfd',
+  } = settings;
+  const filterMode = imageFilterMode === 'mono' || imageFilterMode === 'bw' ? 'mono' : 'original';
+  const brightnessFilter = `brightness(${1 - bgDim / 200})`;
+  const baseFilter = bgBlur > 0 ? `blur(${bgBlur}px) ${brightnessFilter}` : brightnessFilter;
+
+  if (filterMode === 'original') {
+    oCtx.save();
+    oCtx.filter = baseFilter;
+    oCtx.drawImage(img, 0, 0, img.width, img.height);
+    oCtx.restore();
+    return;
+  }
+
+  const pCanvas = processCanvasRef.current;
+  pCanvas.width = img.width;
+  pCanvas.height = img.height;
+  const pCtx = pCanvas.getContext('2d', { willReadFrequently: true });
+  pCtx.clearRect(0, 0, img.width, img.height);
+  pCtx.filter = baseFilter;
+  pCtx.drawImage(img, 0, 0, img.width, img.height);
+  pCtx.filter = 'none';
+
+  const imageData = pCtx.getImageData(0, 0, img.width, img.height);
+  const pixels = imageData.data;
+  const mono = hexToRgb(imageFilterColor);
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const lum = (0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2]) / 255;
+    pixels[i] = clampChannel(mono.r * lum);
+    pixels[i + 1] = clampChannel(mono.g * lum);
+    pixels[i + 2] = clampChannel(mono.b * lum);
+  }
+
+  pCtx.putImageData(imageData, 0, 0);
+  oCtx.drawImage(pCanvas, 0, 0);
 }
 
 function drawAsciiOverlaySelection(img, selection, style, processCanvasRef, oCtx) {
@@ -336,24 +377,68 @@ function drawAsciiOverlaySelection(img, selection, style, processCanvasRef, oCtx
 // ─── Subject Mask generators ──────────────────────────────────────────────────
 
 function pointInSelection(nx, ny, sel) {
+  const point = applyInverseSelectionRotation(nx, ny, sel);
+
   if (sel.type === 'rect' || !sel.type) {
-    return nx >= sel.x && nx <= sel.x + sel.w && ny >= sel.y && ny <= sel.y + sel.h;
+    return point.x >= sel.x && point.x <= sel.x + sel.w && point.y >= sel.y && point.y <= sel.y + sel.h;
   }
 
   if (sel.type === 'circle') {
     const rx = sel.rx ?? sel.r ?? 0;
     const ry = sel.ry ?? sel.r ?? 0;
     if (rx <= 0 || ry <= 0) return false;
-    const dx = (nx - sel.cx) / rx;
-    const dy = (ny - sel.cy) / ry;
+    const dx = (point.x - sel.cx) / rx;
+    const dy = (point.y - sel.cy) / ry;
     return dx * dx + dy * dy <= 1;
   }
 
   if (sel.type === 'freehand' && sel.points && sel.points.length >= 3) {
-    return pointInPolygon(nx, ny, sel.points);
+    return pointInPolygon(point.x, point.y, sel.points);
   }
 
   return false;
+}
+
+function applyInverseSelectionRotation(nx, ny, sel) {
+  if (!sel?.rotation) return { x: nx, y: ny };
+  const center = getSelectionCenter(sel);
+  const radians = -sel.rotation * Math.PI / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const dx = nx - center.x;
+  const dy = ny - center.y;
+  return {
+    x: center.x + dx * cos - dy * sin,
+    y: center.y + dx * sin + dy * cos,
+  };
+}
+
+function getSelectionCenter(sel) {
+  if (sel.type === 'circle') return { x: sel.cx, y: sel.cy };
+  const bounds = getSelectionBounds(sel);
+  return {
+    x: bounds.x + bounds.w / 2,
+    y: bounds.y + bounds.h / 2,
+  };
+}
+
+function getSelectionBounds(sel) {
+  if (sel.type === 'rect' || !sel.type) {
+    return { x: sel.x, y: sel.y, w: sel.w, h: sel.h };
+  }
+  if (sel.type === 'circle') {
+    const rx = sel.rx ?? sel.r ?? 0;
+    const ry = sel.ry ?? sel.r ?? 0;
+    return { x: sel.cx - rx, y: sel.cy - ry, w: rx * 2, h: ry * 2 };
+  }
+  if (sel.type === 'freehand' && sel.points?.length) {
+    const xs = sel.points.map(point => point.x);
+    const ys = sel.points.map(point => point.y);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+  }
+  return { x: 0, y: 0, w: 0, h: 0 };
 }
 
 // Ray casting algorithm — point in polygon

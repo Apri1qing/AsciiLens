@@ -11,13 +11,9 @@ export const translations = {
     dropTitle: '[ Drop Image Here ]',
     dropDragging: '[ Release to Upload ]',
     dropSub: 'or click to browse ·· JPG · PNG · WEBP',
-    heroSub: 'Clear structure · strong visuals · no fluff',
-    featFull: 'Full ASCII',
-    featOverlay: 'Overlay Mode',
-    featExport: 'Export PNG',
 
     // Editor Panel header
-    controls: 'Controls',
+    editorArea: 'Editor',
     rendering: 'Rendering',
 
     // Render mode
@@ -51,6 +47,8 @@ export const translations = {
     asciiLightTone: 'Tone',
     imageBackground: 'Image Background',
     imageLayer: 'Image',
+    imageFilterOriginal: 'Original',
+    imageFilterMono: 'Mono',
 
     // Sliders
     brightness: 'Brightness',
@@ -62,6 +60,8 @@ export const translations = {
     glow: 'Glow',
     vignette: 'Vignette',
     columns: 'Columns',
+    imageFilterColorPicker: 'Image filter color',
+    selectImageFilterColor: 'Select image filter color',
 
     // Footer
     exportPng: 'Export PNG',
@@ -111,13 +111,9 @@ export const translations = {
     dropTitle: '[ 拖拽图片至此 ]',
     dropDragging: '[ 松开以上传 ]',
     dropSub: '或点击选择文件 ·· JPG · PNG · WEBP',
-    heroSub: '清晰结构 · 强视觉 · 不冗余',
-    featFull: '全图ASCII',
-    featOverlay: '叠加模式',
-    featExport: '导出PNG',
 
     // Editor Panel header
-    controls: '控制面板',
+    editorArea: '编辑区',
     rendering: '渲染中',
 
     // Render mode
@@ -151,6 +147,8 @@ export const translations = {
     asciiLightTone: '色调',
     imageBackground: '图片背景',
     imageLayer: '图片',
+    imageFilterOriginal: '原图',
+    imageFilterMono: '单色',
 
     // Sliders
     brightness: '亮度',
@@ -162,6 +160,8 @@ export const translations = {
     glow: '发光',
     vignette: '暗角',
     columns: '列数',
+    imageFilterColorPicker: '图片滤镜颜色',
+    selectImageFilterColor: '选择图片滤镜颜色',
 
     // Footer
     exportPng: '导出 PNG',

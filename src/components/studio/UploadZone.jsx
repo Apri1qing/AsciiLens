@@ -46,14 +46,6 @@ export default function UploadZone({ onUpload }) {
           </div>
         </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="mt-5 font-mono text-[11px] uppercase tracking-[0.28em] text-foreground/58"
-        >
-          {t('heroSub')}
-        </motion.p>
       </div>
 
       <motion.div
@@ -115,20 +107,6 @@ export default function UploadZone({ onUpload }) {
         </div>
       </motion.button>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.55 }}
-        className="flex w-full max-w-2xl items-center gap-3 font-mono text-[9px] uppercase tracking-[0.18em] text-foreground/45 select-none"
-      >
-        <div className="h-px flex-1 bg-border/80" />
-        <span>{t('featFull')}</span>
-        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-        <span>{t('featOverlay')}</span>
-        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-        <span>{t('featExport')}</span>
-        <div className="h-px flex-1 bg-border/80" />
-      </motion.div>
     </div>
   );
 }
