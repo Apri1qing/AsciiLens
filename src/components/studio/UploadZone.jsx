@@ -32,15 +32,15 @@ export default function UploadZone({ onUpload }) {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 sm:gap-8">
+    <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 sm:gap-5">
       <div className="text-center">
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="mx-auto max-w-3xl space-y-4"
+          className="mx-auto max-w-3xl space-y-2"
         >
-          <div className="text-balance text-4xl font-semibold leading-[0.98] text-foreground sm:text-6xl lg:text-7xl">
+          <div className="text-balance text-4xl font-semibold leading-[0.98] text-foreground sm:text-5xl lg:text-6xl">
             AsciiLens turns images into
             <span className="block font-serif font-normal italic text-primary">playful ASCII objects.</span>
           </div>
@@ -79,7 +79,7 @@ export default function UploadZone({ onUpload }) {
         className={`
           group relative block w-full max-w-xl cursor-pointer overflow-hidden rounded-full
           border transition-all duration-300 upload-zone
-          px-7 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+          px-7 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:py-5
           ${dragging
             ? 'border-primary bg-primary text-primary-foreground shadow-[0_0_48px_hsl(var(--primary)/0.18)]'
             : 'border-border/80 bg-muted hover:border-primary hover:bg-primary hover:text-primary-foreground'

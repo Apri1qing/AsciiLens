@@ -148,7 +148,9 @@ export default function Studio() {
   ), [activeSelectionId, settings]);
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:h-screen">
+    <div className={`relative flex min-h-screen flex-col bg-background ${
+      hasImage ? 'overflow-hidden lg:h-screen' : 'overflow-x-hidden'
+    }`}>
       <div className="acid-page-light pointer-events-none absolute inset-0" />
       <input
         ref={replaceInputRef}
@@ -163,8 +165,10 @@ export default function Studio() {
 
         {/* Canvas area */}
         <div
-          className={`relative flex flex-shrink-0 items-center justify-center overflow-hidden p-4 lg:h-auto lg:min-h-0 lg:flex-1 lg:p-8 ${
-            hasImage ? 'h-[46vh] min-h-[320px]' : 'min-h-[calc(100vh-68px)]'
+          className={`relative flex flex-shrink-0 items-center justify-center p-4 lg:h-auto lg:flex-1 lg:p-8 ${
+            hasImage
+              ? 'h-[46vh] min-h-[320px] overflow-hidden lg:min-h-0'
+              : 'min-h-[calc(100svh-68px)] overflow-visible py-4 sm:py-5'
           }`}
         >
           <div className="acid-ambient absolute inset-0" />
