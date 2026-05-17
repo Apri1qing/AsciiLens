@@ -4,6 +4,7 @@ import ControlSlider from './ControlSlider';
 import CharSetPicker from './CharSetPicker';
 import ColorPicker from './ColorPicker';
 import { useLang } from '@/lib/LanguageContext';
+import { trackAuditEvent } from '@/lib/audit';
 
 const IMAGE_FILTER_SWATCHES = ['#fffdfd', '#ffa5c6', '#8bd643', '#0000ee', '#fff4c2', '#ff7a90', '#b9a7ff', '#9ff3ff'];
 
@@ -20,7 +21,14 @@ export default function EditorPanel({
   onShapeModeChange,
 }) {
   const { t } = useLang();
-  const handleDownload = () => canvasRef.current?.download();
+  const handleDownload = () => {
+    trackAuditEvent('export_png', {
+      mode,
+      color_mode: settings.colorMode,
+      selection_count: settings.selectionShapes?.length || 0,
+    });
+    canvasRef.current?.download();
+  };
   const mode = renderMode || settings.mode;
 
   return (
