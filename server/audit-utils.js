@@ -46,8 +46,9 @@ export async function supabaseFetch(path, options = {}) {
     throw new Error(`Supabase request failed: ${response.status} ${text}`);
   }
 
-  if (response.status === 204) return null;
-  return response.json();
+  const text = await response.text();
+  if (!text) return null;
+  return JSON.parse(text);
 }
 
 export function sanitizeText(value, maxLength = MAX_STRING_LENGTH) {
