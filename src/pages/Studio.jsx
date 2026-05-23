@@ -165,7 +165,7 @@ export default function Studio() {
 
   return (
     <div className={`relative flex min-h-screen flex-col bg-background ${
-      hasImage ? 'overflow-hidden lg:h-screen' : 'overflow-x-hidden'
+      hasImage ? 'h-[100svh] overflow-hidden' : 'overflow-x-hidden'
     }`}>
       <div className="acid-page-light pointer-events-none absolute inset-0" />
       <input
@@ -177,13 +177,15 @@ export default function Studio() {
       />
       <Header />
 
-      <main className="relative z-10 flex flex-1 flex-col lg:min-h-0 lg:flex-row">
+      <main className={`relative z-10 flex flex-1 flex-col ${
+        hasImage ? 'min-h-0 overflow-hidden lg:flex-row' : 'lg:min-h-0 lg:flex-row'
+      }`}>
 
         {/* Canvas area */}
         <div
           className={`relative flex flex-shrink-0 items-center justify-center p-4 lg:h-auto lg:flex-1 lg:p-8 ${
             hasImage
-              ? 'h-[46vh] min-h-[320px] overflow-hidden lg:min-h-0'
+              ? 'h-[42svh] min-h-[260px] max-h-[420px] overflow-hidden lg:min-h-0 lg:max-h-none'
               : 'min-h-[calc(100svh-68px)] overflow-visible py-4 sm:py-5'
           }`}
         >
@@ -274,7 +276,7 @@ export default function Studio() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 60, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="flex w-full flex-shrink-0 flex-col border-t border-border/80 bg-card/[0.9] shadow-[0_0_60px_hsl(var(--background)/0.55)] backdrop-blur-xl lg:min-h-0 lg:w-[280px] lg:border-l lg:border-t-0 xl:w-[300px]"
+              className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-t border-border/80 bg-card/[0.9] shadow-[0_0_60px_hsl(var(--background)/0.55)] backdrop-blur-xl lg:w-[280px] lg:flex-shrink-0 lg:border-l lg:border-t-0 xl:w-[300px]"
             >
               <EditorPanel
                 settings={editorSettings}

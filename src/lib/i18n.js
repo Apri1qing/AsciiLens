@@ -65,6 +65,8 @@ export const translations = {
 
     // Footer
     exportPng: 'Export PNG',
+    exporting: 'Exporting',
+    exportFailed: 'Export failed. Open the image preview and save it manually.',
     newImage: 'New Image',
 
     // Status bar
@@ -165,6 +167,8 @@ export const translations = {
 
     // Footer
     exportPng: '导出 PNG',
+    exporting: '导出中',
+    exportFailed: '导出失败。请打开图片预览后手动保存。',
     newImage: '新图片',
 
     // Status bar

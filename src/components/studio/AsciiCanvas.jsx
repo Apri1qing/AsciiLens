@@ -36,13 +36,51 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
   const [stageSize, setStageSize] = useState(null);
 
   useImperativeHandle(ref, () => ({
-    download: () => {
+    exportPng: async () => {
       const canvas = outputRef.current;
-      if (!canvas) return;
-      const link = document.createElement('a');
-      link.download = 'asciilens-art.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      if (!canvas) return { ok: false, error: 'missing_canvas' };
+
+      try {
+        const blob = await canvasToBlob(canvas);
+        const fileName = 'asciilens-art.png';
+        const file = typeof File === 'function'
+          ? new File([blob], fileName, { type: blob.type || 'image/png' })
+          : null;
+
+        if (file && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'AsciiLens',
+              text: 'Exported with AsciiLens',
+            });
+            return { ok: true, method: 'share' };
+          } catch (error) {
+            if (error?.name === 'AbortError') return { ok: true, method: 'share_cancelled' };
+            throw error;
+          }
+        }
+
+        const objectUrl = URL.createObjectURL(blob);
+        if (isLikelyMobileWebKit()) {
+          openPreview(objectUrl);
+          return { ok: true, method: 'preview' };
+        }
+
+        const downloadStarted = triggerBlobDownload(objectUrl, fileName);
+        if (downloadStarted) {
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+          return { ok: true, method: 'download' };
+        }
+
+        openPreview(objectUrl);
+        return { ok: true, method: 'preview' };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : 'export_failed',
+        };
+      }
     },
   }));
 
@@ -138,6 +176,48 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
 export default AsciiCanvas;
 
 // ─── Shared utilities ─────────────────────────────────────────────────────────
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    if (!canvas.width || !canvas.height) {
+      reject(new Error('empty_canvas'));
+      return;
+    }
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+        return;
+      }
+      reject(new Error('blob_export_failed'));
+    }, 'image/png');
+  });
+}
+
+function triggerBlobDownload(objectUrl, fileName) {
+  const link = document.createElement('a');
+  if (typeof link.download !== 'string') return false;
+
+  link.href = objectUrl;
+  link.download = fileName;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  return true;
+}
+
+function isLikelyMobileWebKit() {
+  const userAgent = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function openPreview(objectUrl) {
+  const previewWindow = window.open(objectUrl, '_blank', 'noopener,noreferrer');
+  if (previewWindow) return;
+  window.location.href = objectUrl;
+}
 
 function hexToRgb(hex) {
   const normalized = /^#[0-9a-f]{6}$/i.test(hex || '') ? hex : '#fffdfd';

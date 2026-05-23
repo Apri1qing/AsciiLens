@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Download, RefreshCw, Loader2, Eraser, Square, Circle, PenLine, Check, Palette } from 'lucide-react';
 import ControlSlider from './ControlSlider';
 import CharSetPicker from './CharSetPicker';
@@ -21,18 +21,35 @@ export default function EditorPanel({
   onShapeModeChange,
 }) {
   const { t } = useLang();
-  const handleDownload = () => {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+  const handleDownload = async () => {
+    if (isExporting) return;
+    setExportError('');
     trackAuditEvent('export_png', {
       mode,
       color_mode: settings.colorMode,
       selection_count: settings.selectionShapes?.length || 0,
     });
-    canvasRef.current?.download();
+    setIsExporting(true);
+    try {
+      const result = await canvasRef.current?.exportPng?.();
+      if (!result?.ok) {
+        throw new Error(result?.error || 'export_failed');
+      }
+    } catch (error) {
+      setExportError(t('exportFailed') || 'Export failed. Open the image preview and save it manually.');
+      trackAuditEvent('export_png_failed', {
+        reason: error instanceof Error ? error.message : 'unknown',
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
   const mode = renderMode || settings.mode;
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Panel Header */}
       <div className="flex flex-shrink-0 items-center justify-between border-b border-border/80 bg-card/85 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
@@ -47,7 +64,7 @@ export default function EditorPanel({
       </div>
 
       {/* Scrollable controls */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
 
         {/* ── Render Mode ── */}
         <Section label={t('modeLabel')}>
@@ -162,16 +179,21 @@ export default function EditorPanel({
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 space-y-2 border-t border-border/80 px-4 py-3">
+      <div className="flex-shrink-0 space-y-2 border-t border-border/80 bg-card/95 px-4 py-3">
         <button
           onClick={handleDownload}
-          disabled={!hasResult}
+          disabled={!hasResult || isExporting}
           className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-secondary py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-secondary-foreground transition-all duration-200 hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-25"
         >
           <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <Download className="w-3.5 h-3.5" />
-          {t('exportPng')}
+          {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          {isExporting ? (t('exporting') || 'EXPORTING') : t('exportPng')}
         </button>
+        {exportError && (
+          <p className="font-mono text-[8px] uppercase leading-relaxed tracking-[0.12em] text-destructive">
+            {exportError}
+          </p>
+        )}
         <button
           onClick={onResetEffects}
           className="flex w-full items-center justify-center gap-2 rounded-full border border-transparent py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
