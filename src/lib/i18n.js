@@ -123,8 +123,8 @@ export const translations = {
     resetEffects: '重置效果',
     resetEffectsShort: '重置',
     tagline: '主体感知 · 电影风格 · ASCII',
-    uploadHeroLine1: 'AsciiLens 将图片转为',
-    uploadHeroAccent: '可玩的 ASCII 物件。',
+    uploadHeroLine1: 'AsciiLens turns images into',
+    uploadHeroAccent: 'playful ASCII objects.',
     version: 'v2.0',
     languageToggle: '切换语言',
 
