@@ -51,7 +51,7 @@ export default function EditorPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Panel Header */}
-      <div className="flex flex-shrink-0 items-center justify-between border-b border-border/80 bg-card/85 px-4 py-3 backdrop-blur">
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-border/80 bg-card/85 px-3 py-2 backdrop-blur sm:px-4 sm:py-3">
         <div className="flex items-center gap-3">
           <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-primary">{t('editorArea')}</span>
         </div>
@@ -64,7 +64,7 @@ export default function EditorPanel({
       </div>
 
       {/* Scrollable controls */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:space-y-4 sm:px-4 sm:py-4">
 
         {/* ── Render Mode ── */}
         <Section label={t('modeLabel')}>
@@ -179,35 +179,46 @@ export default function EditorPanel({
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 space-y-2 border-t border-border/80 bg-card/95 px-4 py-3">
-        <button
-          onClick={handleDownload}
-          disabled={!hasResult || isExporting}
-          className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-secondary py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-secondary-foreground transition-all duration-200 hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-25"
-        >
-          <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          {isExporting ? (t('exporting') || 'EXPORTING') : t('exportPng')}
-        </button>
+      <div className="flex-shrink-0 border-t border-border/80 bg-card/95 px-3 pt-2 pb-[max(env(safe-area-inset-bottom),var(--asciilens-browser-bottom-safe,0px),0.5rem)] sm:space-y-2 sm:px-4 sm:py-3">
+        <div className="grid grid-cols-3 gap-2 sm:block sm:space-y-2">
+          <button
+            onClick={handleDownload}
+            disabled={!hasResult || isExporting}
+            aria-label={isExporting ? t('exporting') : t('exportPng')}
+            title={isExporting ? t('exporting') : t('exportPng')}
+            className="group relative flex min-h-11 w-full items-center justify-center gap-1.5 overflow-hidden rounded-full bg-secondary px-2 py-2 font-mono text-[9px] uppercase tracking-[0.12em] text-secondary-foreground transition-all duration-200 hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-25 sm:min-h-0 sm:gap-2 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]"
+          >
+            <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span className="sm:hidden">{isExporting ? (t('exporting') || 'EXPORTING') : t('exportPngShort')}</span>
+            <span className="hidden sm:inline">{isExporting ? (t('exporting') || 'EXPORTING') : t('exportPng')}</span>
+          </button>
+          <button
+            onClick={onResetEffects}
+            aria-label={t('resetEffects') || 'RESET EFFECTS'}
+            title={t('resetEffects') || 'RESET EFFECTS'}
+            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-border/70 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:min-h-0 sm:border-transparent sm:py-2 sm:tracking-[0.18em]"
+          >
+            <Eraser className="h-3.5 w-3.5" />
+            <span className="sm:hidden">{t('resetEffectsShort')}</span>
+            <span className="hidden sm:inline">{t('resetEffects') || 'RESET EFFECTS'}</span>
+          </button>
+          <button
+            onClick={onReset}
+            aria-label={t('newImage')}
+            title={t('newImage')}
+            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-border/70 px-2 py-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:min-h-0 sm:border-transparent sm:py-2 sm:tracking-[0.18em]"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span className="sm:hidden">{t('newImageShort')}</span>
+            <span className="hidden sm:inline">{t('newImage')}</span>
+          </button>
+        </div>
         {exportError && (
-          <p className="font-mono text-[8px] uppercase leading-relaxed tracking-[0.12em] text-destructive">
+          <p className="mt-2 font-mono text-[8px] uppercase leading-relaxed tracking-[0.12em] text-destructive sm:mt-0">
             {exportError}
           </p>
         )}
-        <button
-          onClick={onResetEffects}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-transparent py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <Eraser className="w-3 h-3" />
-          {t('resetEffects') || 'RESET EFFECTS'}
-        </button>
-        <button
-          onClick={onReset}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-transparent py-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-200 hover:border-border hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <RefreshCw className="w-3 h-3" />
-          {t('newImage')}
-        </button>
       </div>
     </div>
   );

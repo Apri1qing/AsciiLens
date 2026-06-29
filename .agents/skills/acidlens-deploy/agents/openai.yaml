@@ -1,0 +1,4 @@
+interface:
+  display_name: "AcidLens Deploy"
+  short_description: "Deploy AcidLens to Vercel and EdgeOne"
+  default_prompt: "Use $acidlens-deploy to deploy AcidLens to Vercel and EdgeOne."

@@ -2,15 +2,21 @@ export const translations = {
   en: {
     // Header
     appName: 'ASCII LENS',
-    appSubtitle: 'Art Studio',
+    appSubtitle: 'ASCII Editor',
+    headerSubtitle: 'Image ASCII editor',
     tagline: 'Subject-Aware · Cinematic · ASCII',
+    uploadHeroLine1: 'AsciiLens turns images into',
+    uploadHeroAccent: 'playful ASCII objects.',
     version: 'v2.0',
     resetEffects: 'Reset Effects',
+    resetEffectsShort: 'Reset',
+    languageToggle: 'Toggle language',
 
     // Upload
     dropTitle: '[ Drop Image Here ]',
     dropDragging: '[ Release to Upload ]',
     dropSub: 'or click to browse ·· JPG · PNG · WEBP',
+    fileUploadLabel: 'Choose an image for AsciiLens',
 
     // Editor Panel header
     editorArea: 'Editor',
@@ -29,6 +35,11 @@ export const translations = {
     manualSelect: 'Manual',
     clearSelection: 'Clear',
     selectionTool: 'Selection',
+    selectionCanvas: 'Selection canvas',
+    selectedSelection: 'Selected selection',
+    deleteActiveSelection: 'Delete active selection',
+    resizeSelection: 'Resize selection',
+    rotateSelection: 'Rotate selection',
     shapeRect: 'Rect',
     shapeEllipse: 'Ellipse',
     shapeFree: 'Free',
@@ -65,9 +76,11 @@ export const translations = {
 
     // Footer
     exportPng: 'Export PNG',
+    exportPngShort: 'PNG',
     exporting: 'Exporting',
     exportFailed: 'Export failed. Open the image preview and save it manually.',
     newImage: 'New Image',
+    newImageShort: 'Image',
 
     // Status bar
     ready: 'READY',
@@ -86,7 +99,7 @@ export const translations = {
     colorCoral: 'Cream',
     colorRgb: 'Color',
     colorPearlDesc: 'Clean',
-    colorAcidDesc: 'Poch',
+    colorAcidDesc: 'Pink',
     colorVerdantDesc: 'Object',
     colorCyanDesc: 'Accent',
     colorCoralDesc: 'CTA',
@@ -99,20 +112,27 @@ export const translations = {
     charCustom: 'Custom',
     charDenseLight: 'Dense → Light',
     charPlaceholder: 'e.g. HELLO WORLD @#$...',
+    selectCharacterSet: 'Select character set',
   },
 
   zh: {
     // Header
     appName: 'ASCII LENS',
-    appSubtitle: '艺术工作室',
+    appSubtitle: 'ASCII 编辑器',
+    headerSubtitle: '图片 ASCII 编辑器',
     resetEffects: '重置效果',
+    resetEffectsShort: '重置',
     tagline: '主体感知 · 电影风格 · ASCII',
+    uploadHeroLine1: 'AsciiLens 将图片转为',
+    uploadHeroAccent: '可玩的 ASCII 物件。',
     version: 'v2.0',
+    languageToggle: '切换语言',
 
     // Upload
     dropTitle: '[ 拖拽图片至此 ]',
     dropDragging: '[ 松开以上传 ]',
     dropSub: '或点击选择文件 ·· JPG · PNG · WEBP',
+    fileUploadLabel: '为 AsciiLens 选择图片',
 
     // Editor Panel header
     editorArea: '编辑区',
@@ -131,6 +151,11 @@ export const translations = {
     manualSelect: '手动',
     clearSelection: '清除',
     selectionTool: '选区',
+    selectionCanvas: '选区画布',
+    selectedSelection: '已选中的选区',
+    deleteActiveSelection: '删除当前选区',
+    resizeSelection: '缩放选区',
+    rotateSelection: '旋转选区',
     shapeRect: '矩形',
     shapeEllipse: '椭圆',
     shapeFree: '自由',
@@ -167,9 +192,11 @@ export const translations = {
 
     // Footer
     exportPng: '导出 PNG',
+    exportPngShort: 'PNG',
     exporting: '导出中',
     exportFailed: '导出失败。请打开图片预览后手动保存。',
     newImage: '新图片',
+    newImageShort: '图片',
 
     // Status bar
     ready: '就绪',
@@ -188,7 +215,7 @@ export const translations = {
     colorCoral: '奶油',
     colorRgb: '彩色',
     colorPearlDesc: '干净',
-    colorAcidDesc: 'Poch',
+    colorAcidDesc: '粉色',
     colorVerdantDesc: '物件',
     colorCyanDesc: '强调',
     colorCoralDesc: '按钮',
@@ -201,5 +228,6 @@ export const translations = {
     charCustom: '自定义',
     charDenseLight: '深色 → 浅色',
     charPlaceholder: '例: 你好世界 @#$...',
+    selectCharacterSet: '选择字符集',
   },
 };

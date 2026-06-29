@@ -14,11 +14,6 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { error: 'Method not allowed' });
   }
 
-  if (!isSupabaseConfigured()) {
-    res.statusCode = 204;
-    return res.end();
-  }
-
   let payload;
   try {
     payload = await readJsonBody(req);
@@ -28,6 +23,11 @@ export default async function handler(req, res) {
 
   const eventName = sanitizeEventName(payload.eventName);
   if (!eventName) return sendJson(res, 400, { error: 'Invalid event name' });
+
+  if (!isSupabaseConfigured()) {
+    res.statusCode = 204;
+    return res.end();
+  }
 
   const row = {
     event_name: eventName,

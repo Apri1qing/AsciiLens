@@ -66,6 +66,35 @@ export default function Studio() {
   const replaceInputRef = useRef(null);
 
   useEffect(() => {
+    const updateViewportHeight = () => {
+      const visualViewport = window.visualViewport;
+      const viewportHeight = Math.round(visualViewport?.height || window.innerHeight);
+      const bottomInset = visualViewport
+        ? Math.max(0, Math.round(window.innerHeight - visualViewport.height - visualViewport.offsetTop))
+        : 0;
+
+      document.documentElement.style.setProperty('--asciilens-app-height', `${viewportHeight}px`);
+      document.documentElement.style.setProperty('--asciilens-browser-bottom-safe', `${Math.min(bottomInset, 72)}px`);
+    };
+    const visualViewport = window.visualViewport;
+
+    updateViewportHeight();
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('orientationchange', updateViewportHeight);
+    visualViewport?.addEventListener('resize', updateViewportHeight);
+    visualViewport?.addEventListener('scroll', updateViewportHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('orientationchange', updateViewportHeight);
+      visualViewport?.removeEventListener('resize', updateViewportHeight);
+      visualViewport?.removeEventListener('scroll', updateViewportHeight);
+      document.documentElement.style.removeProperty('--asciilens-app-height');
+      document.documentElement.style.removeProperty('--asciilens-browser-bottom-safe');
+    };
+  }, []);
+
+  useEffect(() => {
     trackAuditEvent('page_view');
   }, []);
 
@@ -164,14 +193,17 @@ export default function Studio() {
   ), [activeSelectionId, settings]);
 
   return (
-    <div className={`relative flex min-h-screen flex-col bg-background ${
-      hasImage ? 'h-[100svh] overflow-hidden' : 'overflow-x-hidden'
+    <div className={`relative flex flex-col bg-background ${
+      hasImage
+        ? 'h-[var(--asciilens-app-height,100svh)] min-h-0 overflow-hidden'
+        : 'h-[var(--asciilens-app-height,100svh)] min-h-0 overflow-hidden sm:h-auto sm:min-h-screen sm:overflow-x-hidden'
     }`}>
       <div className="acid-page-light pointer-events-none absolute inset-0" />
       <input
         ref={replaceInputRef}
         type="file"
         accept="image/*"
+        aria-label={t('newImage')}
         className="hidden"
         onChange={handleReplaceImageChange}
       />
@@ -183,10 +215,10 @@ export default function Studio() {
 
         {/* Canvas area */}
         <div
-          className={`relative flex flex-shrink-0 items-center justify-center p-4 lg:h-auto lg:flex-1 lg:p-8 ${
+          className={`relative flex flex-shrink-0 items-center justify-center p-2 sm:p-4 lg:h-auto lg:flex-1 lg:p-8 ${
             hasImage
-              ? 'h-[42svh] min-h-[260px] max-h-[420px] overflow-hidden lg:min-h-0 lg:max-h-none'
-              : 'min-h-[calc(100svh-68px)] overflow-visible py-4 sm:py-5'
+              ? 'h-[55svh] min-h-[310px] max-h-[560px] overflow-hidden lg:min-h-0 lg:max-h-none'
+              : 'min-h-0 flex-1 overflow-hidden px-3 py-2 sm:min-h-[calc(100svh-68px)] sm:overflow-visible sm:px-4 sm:py-5'
           }`}
         >
           <div className="acid-ambient absolute inset-0" />
@@ -258,7 +290,7 @@ export default function Studio() {
 
           {/* Bottom status bar */}
           {hasImage && (
-            <div className="absolute bottom-2 left-4 right-4 flex items-center justify-between font-mono text-[8px] tracking-widest text-muted-foreground/40 uppercase select-none">
+            <div className="absolute bottom-2 left-4 right-4 hidden items-center justify-between font-mono text-[8px] tracking-widest text-muted-foreground/40 uppercase select-none sm:flex">
               <span>ASCII·LENS</span>
               <span>
                 COLS:{Math.round(settings.resolution)} · {settings.colorMode === 'original' ? 'ORIGINAL' : 'COLOR'} · {settings.mode.toUpperCase()}

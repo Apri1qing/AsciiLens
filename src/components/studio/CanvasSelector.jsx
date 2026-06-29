@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { useLang } from '@/lib/LanguageContext';
 
 /**
  * CanvasSelector is the interactive overlay for normalized selection shapes.
@@ -13,7 +14,9 @@ export default function CanvasSelector({
   onSelectionUpdate,
   onSelectionDelete,
   shapeMode = 'rect',
+  gesturesDisabled = false,
 }) {
+  const { t } = useLang();
   const overlayRef = useRef(null);
   const shiftRef = useRef(false);
   const [dragState, setDragState] = useState(null);
@@ -25,6 +28,13 @@ export default function CanvasSelector({
     [activeSelectionId, selections],
   );
 
+  useEffect(() => {
+    if (!gesturesDisabled) return;
+    setDragState(null);
+    setEditState(null);
+    setFreePoints([]);
+  }, [gesturesDisabled]);
+
   const normalize = useCallback((clientX, clientY) => {
     const rect = overlayRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
@@ -35,6 +45,7 @@ export default function CanvasSelector({
   }, []);
 
   const beginDrawing = useCallback((e) => {
+    if (gesturesDisabled || (e.pointerType === 'touch' && !e.isPrimary)) return;
     if (e.button !== 0) return;
     e.preventDefault();
     onActiveSelectionChange(null);
@@ -44,9 +55,10 @@ export default function CanvasSelector({
     setDragState({ start: point, current: point });
     setEditState(null);
     if (shapeMode === 'freehand') setFreePoints([point]);
-  }, [normalize, onActiveSelectionChange, shapeMode]);
+  }, [gesturesDisabled, normalize, onActiveSelectionChange, shapeMode]);
 
   const beginMove = useCallback((e, shape) => {
+    if (gesturesDisabled) return;
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -59,9 +71,10 @@ export default function CanvasSelector({
       original: shape,
     });
     setDragState(null);
-  }, [normalize, onActiveSelectionChange]);
+  }, [gesturesDisabled, normalize, onActiveSelectionChange]);
 
   const beginResize = useCallback((e, shape, handle) => {
+    if (gesturesDisabled) return;
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -74,9 +87,10 @@ export default function CanvasSelector({
       original: shape,
     });
     setDragState(null);
-  }, [onActiveSelectionChange]);
+  }, [gesturesDisabled, onActiveSelectionChange]);
 
   const beginRotate = useCallback((e, shape) => {
+    if (gesturesDisabled) return;
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -93,9 +107,10 @@ export default function CanvasSelector({
       original: shape,
     });
     setDragState(null);
-  }, [normalize, onActiveSelectionChange]);
+  }, [gesturesDisabled, normalize, onActiveSelectionChange]);
 
   const onPointerMove = useCallback((e) => {
+    if (gesturesDisabled) return;
     const point = normalize(e.clientX, e.clientY);
 
     if (editState?.type === 'move') {
@@ -126,9 +141,10 @@ export default function CanvasSelector({
         return [...points, point];
       });
     }
-  }, [dragState, editState, normalize, onSelectionUpdate, shapeMode]);
+  }, [dragState, editState, gesturesDisabled, normalize, onSelectionUpdate, shapeMode]);
 
   const onPointerUp = useCallback((e) => {
+    if (gesturesDisabled) return;
     if (editState) {
       setEditState(null);
       return;
@@ -139,7 +155,7 @@ export default function CanvasSelector({
     if (createdShape) onSelectionCreate(createdShape);
     setDragState(null);
     setFreePoints([]);
-  }, [dragState, editState, freePoints, onSelectionCreate, shapeMode]);
+  }, [dragState, editState, freePoints, gesturesDisabled, onSelectionCreate, shapeMode]);
 
   const onDeleteActive = useCallback((e) => {
     e.preventDefault();
@@ -163,7 +179,7 @@ export default function CanvasSelector({
       ref={overlayRef}
       className="absolute inset-0 z-20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       role="application"
-      aria-label="Selection canvas"
+      aria-label={t('selectionCanvas')}
       tabIndex={0}
       style={{ touchAction: 'none', cursor: editState?.type === 'move' ? 'grabbing' : 'crosshair' }}
       onPointerDown={beginDrawing}
@@ -182,6 +198,7 @@ export default function CanvasSelector({
             key={shape.id}
             shape={shape}
             active={shape.id === activeSelectionId}
+            selectedLabel={t('selectedSelection')}
             onPointerDown={(e) => beginMove(e, shape)}
             onSelect={() => onActiveSelectionChange(shape.id)}
           />
@@ -190,6 +207,7 @@ export default function CanvasSelector({
           <SelectionShape
             shape={dragPreview}
             preview
+            selectedLabel={t('selectedSelection')}
             onPointerDown={(e) => e.stopPropagation()}
           />
         )}
@@ -201,6 +219,8 @@ export default function CanvasSelector({
       {activeSelection && activeGeometry && (
         <SelectionHandleLayer
           geometry={activeGeometry}
+          resizeLabel={t('resizeSelection')}
+          rotateLabel={t('rotateSelection')}
           onResizePointerDown={(e, handle) => beginResize(e, activeSelection, handle)}
           onRotatePointerDown={(e) => beginRotate(e, activeSelection)}
         />
@@ -209,7 +229,8 @@ export default function CanvasSelector({
       {activeGeometry && (
         <button
           type="button"
-          aria-label="Delete active selection"
+          aria-label={t('deleteActiveSelection')}
+          title={t('deleteActiveSelection')}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onDeleteActive}
           className="absolute z-40 flex h-5 w-5 items-center justify-center rounded-full border border-primary/35 bg-background/75 text-primary/85 shadow-[0_0_18px_hsl(var(--primary)/0.18)] backdrop-blur-md transition-all duration-200 hover:border-destructive/55 hover:bg-destructive/85 hover:text-destructive-foreground hover:shadow-[0_0_22px_hsl(var(--destructive)/0.28)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -226,7 +247,7 @@ export default function CanvasSelector({
   );
 }
 
-function SelectionShape({ shape, preview = false, active = false, onPointerDown, onSelect = () => {} }) {
+function SelectionShape({ shape, preview = false, active = false, selectedLabel, onPointerDown, onSelect = () => {} }) {
   const strokeColor = preview ? 'hsl(var(--secondary))' : 'transparent';
   const fillColor = preview ? 'hsl(var(--secondary) / 0.16)' : 'transparent';
   const strokeWidth = preview ? '4' : '12';
@@ -264,7 +285,7 @@ function SelectionShape({ shape, preview = false, active = false, onPointerDown,
         <path {...common} strokeLinecap="round" strokeLinejoin="round" d={freehandD(shape.points)} />
       )}
       {active && (
-        <title>Selected selection</title>
+        <title>{selectedLabel}</title>
       )}
     </g>
   );
@@ -287,7 +308,7 @@ function SelectionGuideLine({ geometry }) {
   );
 }
 
-function SelectionHandleLayer({ geometry, onResizePointerDown, onRotatePointerDown }) {
+function SelectionHandleLayer({ geometry, resizeLabel, rotateLabel, onResizePointerDown, onRotatePointerDown }) {
   const controls = [
     ['nw', geometry.corners.nw],
     ['ne', geometry.corners.ne],
@@ -301,7 +322,8 @@ function SelectionHandleLayer({ geometry, onResizePointerDown, onRotatePointerDo
         <button
           key={handle}
           type="button"
-          aria-label={`Resize selection ${handle}`}
+          aria-label={`${resizeLabel} ${handle}`}
+          title={`${resizeLabel} ${handle}`}
           className="pointer-events-auto absolute h-3 w-3 rounded-full border border-primary/80 bg-background/90 shadow-[0_0_12px_hsl(var(--primary)/0.22)] backdrop-blur-sm transition-transform duration-150 hover:scale-125 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           onPointerDown={(e) => onResizePointerDown(e, handle)}
           onClick={(e) => e.stopPropagation()}
@@ -315,7 +337,8 @@ function SelectionHandleLayer({ geometry, onResizePointerDown, onRotatePointerDo
       ))}
       <button
         type="button"
-        aria-label="Rotate selection"
+        aria-label={rotateLabel}
+        title={rotateLabel}
         className="pointer-events-auto absolute h-3.5 w-3.5 cursor-grab rounded-full border border-background/80 bg-primary shadow-[0_0_14px_hsl(var(--primary)/0.3)] transition-transform duration-150 hover:scale-125 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         onPointerDown={onRotatePointerDown}
         onClick={(e) => e.stopPropagation()}

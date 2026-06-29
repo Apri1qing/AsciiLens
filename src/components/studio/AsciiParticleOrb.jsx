@@ -323,7 +323,7 @@ export default function AsciiParticleOrb() {
       const elapsed = reduceMotion ? 0 : (now - start) / 1000;
       const cssWidth = width / dpr;
       const cssHeight = height / dpr;
-      const frameSize = clamp(Math.min(cssWidth * 0.72, cssHeight * 0.88), 188, 320);
+      const frameSize = clamp(Math.min(cssWidth * 0.72, cssHeight * 0.82), 148, 320);
       const frameX = (cssWidth - frameSize) / 2;
       const frameY = (cssHeight - frameSize) / 2 + cssHeight * 0.01;
       const frameBorder = clamp(frameSize * 0.036, 7, 12);

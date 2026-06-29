@@ -117,6 +117,13 @@ body::before {
   animation: acid-scan 9s ease-in-out infinite;
 }
 
+@media (max-width: 640px) {
+  .acid-stage-shell::before {
+    inset: 8px;
+    border-radius: 18px;
+  }
+}
+
 @keyframes acid-scan {
   0%, 100% { transform: translateX(-42%); opacity: 0.25; }
   50% { transform: translateX(42%); opacity: 0.55; }
@@ -210,13 +217,19 @@ body::before {
 
 @media (max-width: 640px) {
   .ascii-prism-scene {
-    height: clamp(210px, 54vw, 280px);
+    height: clamp(200px, 50vw, 260px);
   }
 }
 
 @media (max-height: 820px) {
   .ascii-prism-scene {
-    height: clamp(200px, 30vw, 285px);
+    height: clamp(188px, 42vw, 235px);
+  }
+}
+
+@media (max-width: 640px) and (max-height: 700px) {
+  .ascii-prism-scene {
+    height: clamp(172px, 39vw, 210px);
   }
 }
 
@@ -243,26 +256,112 @@ body::before {
 /* Range slider */
 input[type='range'] {
   -webkit-appearance: none;
-  background: transparent;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 1px !important;
+  height: 28px;
+  touch-action: none;
   width: 100%;
 }
 input[type='range']::-webkit-slider-track {
-  background: hsl(var(--border));
+  background: transparent;
+  border-radius: 999px;
   height: 1px;
 }
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: hsl(var(--primary));
   cursor: pointer;
-  margin-top: -5.5px;
-  box-shadow: 0 0 10px hsl(var(--primary) / 0.6), 0 0 20px hsl(var(--primary) / 0.2);
-  transition: box-shadow 0.2s;
+  margin-top: -4.5px;
+  box-shadow: 0 0 0 3px hsl(var(--background) / 0.75), 0 0 10px hsl(var(--primary) / 0.34);
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-input[type='range']:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 14px hsl(var(--primary) / 0.9), 0 0 28px hsl(var(--primary) / 0.3);
+input[type='range']:hover {
+  background-size: 100% 2px;
+}
+input[type='range']:hover::-webkit-slider-thumb,
+input[type='range']:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px hsl(var(--background) / 0.78), 0 0 14px hsl(var(--primary) / 0.55);
+  transform: scale(1.1);
+}
+input[type='range']:focus-visible {
+  outline: none;
+  background-size: 100% 2px;
+}
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px hsl(var(--background) / 0.84), 0 0 0 6px hsl(var(--ring) / 0.32), 0 0 16px hsl(var(--primary) / 0.5);
+}
+
+input[type='range']::-moz-range-track {
+  background: hsl(var(--border));
+  border-radius: 999px;
+  height: 1px;
+}
+
+input[type='range']::-moz-range-progress {
+  background: hsl(var(--primary));
+  border-radius: 999px;
+  height: 1px;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--background) / 0.75), 0 0 10px hsl(var(--primary) / 0.34);
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+input[type='range']:hover::-moz-range-track,
+input[type='range']:hover::-moz-range-progress,
+input[type='range']:focus-visible::-moz-range-track,
+input[type='range']:focus-visible::-moz-range-progress {
+  height: 2px;
+}
+
+input[type='range']:hover::-moz-range-thumb,
+input[type='range']:active::-moz-range-thumb {
+  box-shadow: 0 0 0 4px hsl(var(--background) / 0.78), 0 0 14px hsl(var(--primary) / 0.55);
+  transform: scale(1.1);
+}
+
+input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px hsl(var(--background) / 0.84), 0 0 0 6px hsl(var(--ring) / 0.32), 0 0 16px hsl(var(--primary) / 0.5);
+}
+
+@media (max-width: 640px) {
+  input[type='range'] {
+    height: 44px;
+  }
+
+  input[type='range']::-webkit-slider-track {
+    height: 1px;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -5.5px;
+  }
+
+  input[type='range']::-moz-range-track {
+    height: 1px;
+  }
+
+  input[type='range']::-moz-range-progress {
+    height: 1px;
+  }
+
+  input[type='range']::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 /* Animated border for canvas area */

@@ -4,7 +4,7 @@ export default function ControlSlider({ label, value, min, max, onChange, displa
   const pct = ((value - min) / (max - min)) * 100;
 
   return (
-    <div className="space-y-1.5 group">
+    <div className="group space-y-1">
       <div className="flex justify-between items-center">
         <label className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase group-hover:text-foreground/70 transition-colors">
           {label}
@@ -20,7 +20,7 @@ export default function ControlSlider({ label, value, min, max, onChange, displa
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full cursor-pointer"
+        className="mobile-range w-full cursor-pointer"
         style={{
           background: `linear-gradient(to right, hsl(var(--primary)) ${pct}%, hsl(var(--border)) ${pct}%)`,
         }}

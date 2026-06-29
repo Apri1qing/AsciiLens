@@ -32,8 +32,24 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
   const outputRef = useRef(null);
   const animFrameRef = useRef(null);
   const containerRef = useRef(null);
+  const activePointersRef = useRef(new Map());
+  const gestureRef = useRef(null);
+  const transformRef = useRef({ scale: 1, x: 0, y: 0 });
   const [imgAspect, setImgAspect] = useState(null);
   const [stageSize, setStageSize] = useState(null);
+  const [gestureActive, setGestureActive] = useState(false);
+  const [viewportTransform, setViewportTransform] = useState({ scale: 1, x: 0, y: 0 });
+
+  useEffect(() => {
+    transformRef.current = viewportTransform;
+  }, [viewportTransform]);
+
+  useEffect(() => {
+    activePointersRef.current.clear();
+    gestureRef.current = null;
+    setGestureActive(false);
+    setViewportTransform({ scale: 1, x: 0, y: 0 });
+  }, [image?.url]);
 
   useImperativeHandle(ref, () => ({
     exportPng: async () => {
@@ -47,7 +63,7 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
           ? new File([blob], fileName, { type: blob.type || 'image/png' })
           : null;
 
-        if (file && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        if (shouldUseFileShare() && file && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
@@ -152,8 +168,91 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
     return () => resizeObserver.disconnect();
   }, [imgAspect]);
 
+  const handlePointerDownCapture = (event) => {
+    if (event.pointerType !== 'touch') return;
+    activePointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (activePointersRef.current.size < 2) return;
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      containerRef.current?.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture can fail if the browser already assigned it to the overlay.
+    }
+
+    const points = getFirstTwoPoints(activePointersRef.current);
+    if (!points) return;
+    const currentTransform = transformRef.current;
+    gestureRef.current = {
+      distance: distanceBetween(points[0], points[1]),
+      center: midpoint(points[0], points[1]),
+      scale: currentTransform.scale,
+      x: currentTransform.x,
+      y: currentTransform.y,
+    };
+    setGestureActive(true);
+  };
+
+  const handlePointerMoveCapture = (event) => {
+    if (event.pointerType !== 'touch' || !activePointersRef.current.has(event.pointerId)) return;
+    activePointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (activePointersRef.current.size < 2 || !gestureRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const points = getFirstTwoPoints(activePointersRef.current);
+    if (!points) return;
+
+    const gesture = gestureRef.current;
+    const nextCenter = midpoint(points[0], points[1]);
+    const nextScale = clamp(gesture.scale * (distanceBetween(points[0], points[1]) / Math.max(1, gesture.distance)), 1, 3);
+    const nextPan = clampPan({
+      x: gesture.x + nextCenter.x - gesture.center.x,
+      y: gesture.y + nextCenter.y - gesture.center.y,
+      scale: nextScale,
+      stageSize,
+    });
+
+    setViewportTransform({ scale: nextScale, ...nextPan });
+  };
+
+  const handlePointerEndCapture = (event) => {
+    if (event.pointerType !== 'touch') return;
+    activePointersRef.current.delete(event.pointerId);
+
+    if (gestureActive) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (activePointersRef.current.size < 2) {
+      gestureRef.current = null;
+      setGestureActive(false);
+      setViewportTransform(current => (
+        current.scale <= 1.02
+          ? { scale: 1, x: 0, y: 0 }
+          : { scale: current.scale, ...clampPan({ ...current, stageSize }) }
+      ));
+    }
+  };
+
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-0 flex items-center justify-center">
+    <div
+      ref={containerRef}
+      className="relative flex h-full min-h-0 w-full touch-none items-center justify-center overflow-hidden"
+      onPointerDownCapture={handlePointerDownCapture}
+      onPointerMoveCapture={handlePointerMoveCapture}
+      onPointerUpCapture={handlePointerEndCapture}
+      onPointerCancelCapture={handlePointerEndCapture}
+    >
       <canvas ref={processCanvasRef} className="hidden" />
       {/* Wrapper sized to exact image aspect ratio so selector overlays align perfectly. */}
       <div
@@ -162,12 +261,18 @@ const AsciiCanvas = forwardRef(function AsciiCanvas(
           ? {
               width: `${stageSize.width}px`,
               height: `${stageSize.height}px`,
+              transform: `translate3d(${viewportTransform.x}px, ${viewportTransform.y}px, 0) scale(${viewportTransform.scale})`,
+              transformOrigin: 'center center',
+              transition: gestureActive ? 'none' : 'transform 140ms ease-out',
+              willChange: viewportTransform.scale > 1 || gestureActive ? 'transform' : 'auto',
             }
           : { position: 'relative', display: 'inline-block' }
         }
       >
         <canvas ref={outputRef} style={{ display: 'block', width: '100%', height: '100%' }} />
-        {children}
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { gesturesDisabled: gestureActive })
+          : children}
       </div>
     </div>
   );
@@ -208,9 +313,44 @@ function triggerBlobDownload(objectUrl, fileName) {
   return true;
 }
 
+function getFirstTwoPoints(pointerMap) {
+  const points = Array.from(pointerMap.values());
+  return points.length >= 2 ? [points[0], points[1]] : null;
+}
+
+function distanceBetween(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function midpoint(a, b) {
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function clampPan({ x, y, scale, stageSize }) {
+  if (!stageSize || scale <= 1.01) return { x: 0, y: 0 };
+  const maxX = Math.max(36, (stageSize.width * (scale - 1)) / 2 + 36);
+  const maxY = Math.max(36, (stageSize.height * (scale - 1)) / 2 + 36);
+  return {
+    x: clamp(x, -maxX, maxX),
+    y: clamp(y, -maxY, maxY),
+  };
+}
+
 function isLikelyMobileWebKit() {
   const userAgent = navigator.userAgent || '';
   return /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function shouldUseFileShare() {
+  const userAgent = navigator.userAgent || '';
+  return /Android|iPad|iPhone|iPod/i.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 function openPreview(objectUrl) {
