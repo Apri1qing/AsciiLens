@@ -80,7 +80,7 @@ export default {
     try {
       const now = new Date();
       const window = auditWindowForRange(url.searchParams.get('range') || 'yesterday', now);
-      const summary = await readSummary(env.AUDIT_DB, window, now);
+      const summary = await readSummary(env.AUDIT_DB, window, now, env.AUDIT_HISTORY_ENABLED === 'true');
       return json(200, { ok: true, summary });
     } catch {
       return json(500, { error: 'Failed to fetch audit summary' });

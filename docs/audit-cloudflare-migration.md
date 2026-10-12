@@ -2,6 +2,8 @@
 
 Status: implementation prepared for review; production cutover is pending parent confirmation. The public site is on Vercel at `https://asciilens.indieapril.fun`. This runbook changes only AsciiLens audit storage. Do not touch Umee, pause `umee-staging`, alter DNS, delete old domains/databases, or upgrade a plan.
 
+This is the original collection-release runbook. The parent has since reported creation of the Worker and empty D1; reuse those resources, do not rerun creation. The independently reviewed deployment may stay pinned to `3d76db6` plus its database-ID-only deployment commit. Historical import is a separate, default-disabled follow-up documented in [audit-history-import.md](audit-history-import.md), including safe `0002` application when the existing `0001` schema was installed without a migration ledger. No source deletion is authorized by completing the steps below.
+
 ## Proposed minimum resources and approvals
 
 | Item | Proposed configuration | Required before production |

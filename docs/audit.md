@@ -4,6 +4,8 @@ AsciiLens records anonymous product-usage events and exposes a token-protected, 
 
 This implementation replaces the Supabase runtime dependency with Cloudflare Worker + D1. **Code readiness is not production cutover.** Deployment requires the account/resource/security approval and user-entered secrets in [the migration runbook](audit-cloudflare-migration.md).
 
+The separate [historical import and deletion runbook](audit-history-import.md) describes the optional follow-up. It does not block the reviewed live-collection release. No historical source data has yet been obtained or imported.
+
 ## Architecture and credentials
 
 ```text
@@ -65,17 +67,20 @@ The additive `summary.coverage` object is mandatory for interpreting reports:
 {
   "source": "cloudflare_d1",
   "collectionStartedAt": null,
-  "historicalData": "not_imported",
+  "historicalData": "not_checked",
   "historicalUsage": "unknown",
   "status": "not_started",
   "observedStart": null,
   "observedEnd": null,
   "ongoing": true,
-  "note": "Counts cover recorded D1 events only. Earlier Supabase history is unavailable and has not been imported; missing history is unknown, not zero. Coverage does not guarantee delivery of every browser event."
+  "history": { "status": "disabled", "includedInTotals": false, "usage": "unknown" },
+  "note": "Live D1 events only. Historical lookup is disabled, so import state is not checked. Earlier usage and collection gaps remain unknown, not zero."
 }
 ```
 
 `collectionStartedAt` is set atomically with the first successfully stored real event. It is a conservative coverage boundary, not the migration-file execution time. The marker survives later writes and is separate from the events table. No event is seeded to establish it.
+
+With optional historical lookup enabled, `coverage.live` and `coverage.history` report live collection and verified imported snapshots separately. The original `status` and `collectionStartedAt` still refer to live collection (`statusScope: "live_collection_only"`); they are not backdated by an import. Only frozen, reconciled historical rows with a matching verification receipt join the existing counters. Disabled lookup reports `not_checked`, not an unverified claim that data was or was not imported. See the import runbook for states, known gaps and rollback.
 
 | `coverage.status` | Meaning for the requested window |
 | --- | --- |

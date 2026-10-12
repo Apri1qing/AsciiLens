@@ -64,7 +64,8 @@ test('empty D1 reports unknown historical coverage, never an imported or complet
   const { summary } = await response.json();
   assert.equal(summary.coverage.status, 'not_started');
   assert.equal(summary.coverage.collectionStartedAt, null);
-  assert.equal(summary.coverage.historicalData, 'not_imported');
+  assert.equal(summary.coverage.historicalData, 'not_checked');
+  assert.equal(summary.coverage.history.status, 'disabled');
   assert.equal(summary.coverage.historicalUsage, 'unknown');
   assert.equal(summary.totals.events, 0);
   assert.equal(summary.window.range, '7d');

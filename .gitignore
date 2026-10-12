@@ -32,3 +32,5 @@ dist-ssr
 .vercel
 .wrangler
 .dev.vars*
+# Source exports, prepared history rows, receipts, and local rehearsal state.
+audit-history-private/
