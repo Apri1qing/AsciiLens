@@ -4,11 +4,11 @@ ASCII LENS is a Vite + React app for turning images into stylized ASCII artwork.
 
 ## Public URL
 
-https://asciilens.vercel.app/
+https://asciilens.indieapril.fun/
 
 ## Usage Audit
 
-AsciiLens can record anonymous usage events and expose a token-protected summary API for agents through Vercel and Supabase. See [docs/audit.md](docs/audit.md).
+AsciiLens can record anonymous usage events and expose a token-protected summary API for agents through a Vercel same-origin proxy and Cloudflare Worker + D1. See [docs/audit.md](docs/audit.md).
 
 ## Development
 

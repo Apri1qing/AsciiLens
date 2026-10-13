@@ -5,6 +5,12 @@ import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
+  { ignores: ["**/dist/**", "**/.wrangler/**"] },
+  {
+    files: ["api/audit/**/*.js", "server/audit-utils.js", "shared/**/*.js", "tests/audit/**/*.js", "workers/audit/**/*.js"],
+    ...pluginJs.configs.recommended,
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
   {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",

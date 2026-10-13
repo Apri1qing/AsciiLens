@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "asciilens-audit",
+  "main": "index.js",
+  "compatibility_date": "2026-07-30",
+  "workers_dev": true,
+  "preview_urls": false,
+  "send_metrics": false,
+  "observability": { "enabled": false },
+  // No routes, DNS changes, cron, public raw-data API, or platform API token.
+  // AUDIT_PROXY_TOKEN must be entered securely by the user after approval.
+  "d1_databases": [
+    {
+      "binding": "AUDIT_DB",
+      "database_name": "asciilens-audit",
+      // Placeholder: replace only after the account and resource are approved.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+      "remote": false
+    }
+  ]
+}

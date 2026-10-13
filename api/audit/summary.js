@@ -1,9 +1,7 @@
 import {
-  auditWindowForRange,
-  buildUsageSummary,
-  fetchAuditEvents,
+  auditWorkerFetch,
   isAuditReadAuthorized,
-  isSupabaseConfigured,
+  isAuditStorageConfigured,
   sendJson,
 } from '../../server/audit-utils.js';
 
@@ -26,21 +24,21 @@ export default async function handler(req, res) {
     return sendJson(res, 401, { error: 'Unauthorized' });
   }
 
-  if (!isSupabaseConfigured()) {
-    return sendJson(res, 503, { error: 'Supabase audit storage is not configured' });
+  if (!isAuditStorageConfigured()) {
+    return sendJson(res, 503, { error: 'Audit storage is not configured' });
   }
 
-  const { range, start, end } = auditWindowForRange(queryValue(req, 'range') || 'yesterday');
+  const value = queryValue(req, 'range');
+  const range = ['today', 'yesterday', '7d'].includes(value) ? value : 'yesterday';
 
   try {
-    const events = await fetchAuditEvents(start, end);
-    const summary = buildUsageSummary(events, start, end, range);
+    const { summary } = await auditWorkerFetch(`/api/audit/summary?range=${range}`);
+    if (!summary?.window || !summary?.totals || !summary?.coverage) throw new Error('Invalid summary');
     return sendJson(res, 200, {
       ok: true,
       summary,
     });
-  } catch (error) {
-    console.error(error);
+  } catch {
     return sendJson(res, 500, { error: 'Failed to fetch audit summary' });
   }
 }
