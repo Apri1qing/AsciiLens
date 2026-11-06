@@ -4,7 +4,6 @@ import ControlSlider from './ControlSlider';
 import CharSetPicker from './CharSetPicker';
 import ColorPicker from './ColorPicker';
 import { useLang } from '@/lib/LanguageContext';
-import { trackAuditEvent } from '@/lib/audit';
 
 const IMAGE_FILTER_SWATCHES = ['#fffdfd', '#ffa5c6', '#8bd643', '#0000ee', '#fff4c2', '#ff7a90', '#b9a7ff', '#9ff3ff'];
 
@@ -26,22 +25,14 @@ export default function EditorPanel({
   const handleDownload = async () => {
     if (isExporting) return;
     setExportError('');
-    trackAuditEvent('export_png', {
-      mode,
-      color_mode: settings.colorMode,
-      selection_count: settings.selectionShapes?.length || 0,
-    });
     setIsExporting(true);
     try {
       const result = await canvasRef.current?.exportPng?.();
       if (!result?.ok) {
         throw new Error(result?.error || 'export_failed');
       }
-    } catch (error) {
+    } catch {
       setExportError(t('exportFailed') || 'Export failed. Open the image preview and save it manually.');
-      trackAuditEvent('export_png_failed', {
-        reason: error instanceof Error ? error.message : 'unknown',
-      });
     } finally {
       setIsExporting(false);
     }

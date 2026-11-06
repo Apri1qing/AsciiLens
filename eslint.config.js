@@ -7,7 +7,7 @@ import pluginUnusedImports from "eslint-plugin-unused-imports";
 export default [
   { ignores: ["**/dist/**", "**/.wrangler/**"] },
   {
-    files: ["api/audit/**/*.js", "server/audit-utils.js", "shared/**/*.js", "tests/audit/**/*.js", "tests/analytics/**/*.js", "workers/audit/**/*.js"],
+    files: ["tests/analytics/**/*.js"],
     ...pluginJs.configs.recommended,
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
