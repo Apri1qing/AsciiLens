@@ -10,6 +10,17 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
+function listFiles(relDir, acc = []) {
+  const dir = join(root, relDir);
+  if (!existsSync(dir)) return acc;
+  for (const name of readdirSync(dir, { withFileTypes: true })) {
+    const rel = `${relDir}/${name.name}`;
+    if (name.isDirectory()) listFiles(rel, acc);
+    else acc.push(rel);
+  }
+  return acc;
+}
+
 test('main.jsx injects default Vercel Web Analytics with no custom options', () => {
   const source = read('src/main.jsx');
   assert.match(source, /import \{ inject \} from '@vercel\/analytics'/);
@@ -24,7 +35,6 @@ test('application source does not add WA custom events, UTM, or virtual page hel
     'src/App.jsx',
     'src/pages/Studio.jsx',
     'src/components/studio/EditorPanel.jsx',
-    'src/lib/audit.js',
   ];
   for (const file of files) {
     const source = read(file);
@@ -42,16 +52,9 @@ test('application source does not add WA custom events, UTM, or virtual page hel
   }
 });
 
-test('custom audit client, proxy, and worker remain in place', () => {
-  const audit = read('src/lib/audit.js');
-  assert.match(audit, /const AUDIT_ENDPOINT = '\/api\/audit\/event'/);
-  assert.match(audit, /export function trackAuditEvent/);
-  const studio = read('src/pages/Studio.jsx');
-  assert.match(studio, /trackAuditEvent\('page_view'\)/);
-  assert.match(studio, /trackAuditEvent\('image_upload'/);
-  const editor = read('src/components/studio/EditorPanel.jsx');
-  assert.match(editor, /trackAuditEvent\('export_png'/);
+test('custom audit client, proxy, worker, and tests are gone', () => {
   for (const rel of [
+    'src/lib/audit.js',
     'api/audit/event.js',
     'api/audit/summary.js',
     'server/audit-utils.js',
@@ -60,19 +63,43 @@ test('custom audit client, proxy, and worker remain in place', () => {
     'workers/audit/index.js',
     'workers/audit/storage.js',
     'workers/audit/wrangler.jsonc',
+    'tests/audit/proxy.test.js',
+    'tests/audit/core.test.js',
+    'docs/audit.md',
+    'docs/audit-cloudflare-migration.md',
+    'docs/audit-history-import.md',
   ]) {
-    assert.equal(existsSync(join(root, rel)), true, `${rel} must remain until a later removal PR`);
+    assert.equal(existsSync(join(root, rel)), false, `${rel} must be removed`);
   }
+
+  const studio = read('src/pages/Studio.jsx');
+  const editor = read('src/components/studio/EditorPanel.jsx');
+  assert.doesNotMatch(studio, /trackAuditEvent/);
+  assert.doesNotMatch(editor, /trackAuditEvent/);
+  assert.doesNotMatch(studio, /\/api\/audit/);
+  assert.doesNotMatch(editor, /\/api\/audit/);
 });
 
-test('package.json depends on @vercel/analytics and keeps audit tests', () => {
+test('package.json depends on @vercel/analytics and has no audit tests', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.equal(typeof pkg.dependencies['@vercel/analytics'], 'string');
-  assert.match(pkg.scripts['test:audit'], /tests\/audit/);
+  assert.equal(pkg.scripts['test:audit'], undefined);
   assert.match(pkg.scripts['test:analytics'], /tests\/analytics/);
 });
 
-test('production build includes the WA script path and keeps the audit beacon', (t) => {
+test('src and api production paths do not call /api/audit or the Worker', () => {
+  const files = [...listFiles('src'), ...listFiles('api')];
+  assert.ok(files.length > 0, 'expected application source files');
+  for (const file of files) {
+    const source = read(file);
+    assert.doesNotMatch(source, /\/api\/audit/, `${file} must not call /api/audit`);
+    assert.doesNotMatch(source, /trackAuditEvent/, `${file} must not call trackAuditEvent`);
+    assert.doesNotMatch(source, /AUDIT_WORKER_URL/, `${file} must not read AUDIT_WORKER_URL`);
+    assert.doesNotMatch(source, /asciilens-audit/, `${file} must not reference asciilens-audit`);
+  }
+});
+
+test('production build includes the WA script path and omits the audit beacon', (t) => {
   const distAssets = join(root, 'dist/assets');
   if (!existsSync(distAssets)) {
     t.skip('dist/ not built yet');
@@ -82,5 +109,6 @@ test('production build includes the WA script path and keeps the audit beacon', 
   assert.ok(bundles.length > 0, 'expected hashed JS assets in dist/assets');
   const combined = bundles.map((name) => read(`dist/assets/${name}`)).join('\n');
   assert.match(combined, /_vercel\/insights/);
-  assert.match(combined, /\/api\/audit\/event/);
+  assert.doesNotMatch(combined, /\/api\/audit\/event/);
+  assert.doesNotMatch(combined, /trackAuditEvent/);
 });

@@ -6,8 +6,6 @@ import EditorPanel from '../components/studio/EditorPanel';
 import Header from '../components/studio/Header';
 import CanvasSelector from '../components/studio/CanvasSelector';
 import { useLang } from '@/lib/LanguageContext';
-import { fileAuditMetadata, trackAuditEvent } from '@/lib/audit';
-
 
 const DEFAULT_SETTINGS = {
   mode: 'overlay',
@@ -94,11 +92,7 @@ export default function Studio() {
     };
   }, []);
 
-  useEffect(() => {
-    trackAuditEvent('page_view');
-  }, []);
-
-  const handleImageUpload = useCallback((imgData, source = 'upload') => {
+  const handleImageUpload = useCallback((imgData) => {
     setImage(current => {
       if (current?.url?.startsWith('blob:') && current.url !== imgData.url) URL.revokeObjectURL(current.url);
       return imgData;
@@ -107,15 +101,10 @@ export default function Studio() {
     setIsProcessing(false);
     setActiveSelectionId(null);
     setSettings({ ...DEFAULT_SETTINGS });
-    trackAuditEvent('image_upload', {
-      source,
-      ...fileAuditMetadata(imgData.file),
-    });
   }, []);
 
   const handleNewImage = useCallback(() => {
     if (!replaceInputRef.current) return;
-    trackAuditEvent('new_image_picker_open');
     replaceInputRef.current.value = '';
     replaceInputRef.current.click();
   }, []);
@@ -123,7 +112,7 @@ export default function Studio() {
   const handleReplaceImageChange = useCallback((event) => {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
-    handleImageUpload({ url: URL.createObjectURL(file), file }, 'replace');
+    handleImageUpload({ url: URL.createObjectURL(file), file });
   }, [handleImageUpload]);
 
   const handleSettingsChange = useCallback((key, value) => {
@@ -131,10 +120,6 @@ export default function Studio() {
   }, []);
 
   const handleEditorChange = useCallback((key, value) => {
-    if (key === 'mode' && settings.mode !== value) {
-      trackAuditEvent('render_mode_change', { mode: value });
-    }
-
     if (settings.mode === 'overlay' && SELECTION_SETTING_KEYS.has(key) && activeSelectionId) {
       setSettings(prev => ({
         ...prev,
@@ -158,7 +143,6 @@ export default function Studio() {
       selectionShapes: [...(prev.selectionShapes || []), nextShape],
     }));
     setActiveSelectionId(id);
-    trackAuditEvent('selection_create', { shape_type: shape.type });
   }, [settings]);
 
   const handleUpdateSelection = useCallback((id, nextShape) => {
@@ -176,7 +160,6 @@ export default function Studio() {
       return { ...prev, selectionShapes };
     });
     setActiveSelectionId(current => (current === id ? null : current));
-    trackAuditEvent('selection_delete');
   }, []);
 
   const hasImage = !!image;
@@ -319,7 +302,6 @@ export default function Studio() {
                   setActiveSelectionId(null);
                   setAsciiResult(null);
                   setSettings({ ...DEFAULT_SETTINGS });
-                  trackAuditEvent('reset_effects');
                 }}
                 canvasRef={canvasRef}
                 isProcessing={isProcessing}
@@ -327,7 +309,6 @@ export default function Studio() {
                 shapeMode={shapeMode}
                 onShapeModeChange={(nextMode) => {
                   setShapeMode(nextMode);
-                  trackAuditEvent('selection_tool_change', { shape_mode: nextMode });
                 }}
               />
             </motion.aside>
